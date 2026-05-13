@@ -628,16 +628,10 @@ const SCHOOL_EMOJI={"Lycée Pétion":"🏫","Collège Bird":"🏛️","Instituti
 const REPLIES=["Ah ouais ? 👀","Lol 😂","C'est vrai !","Super 🔥","Vraiment ? 😮","😄","D'accord !","Cool 👍"];
 const RCOLS={like:"#ff4d7a",fire:"#ff7a1a",laugh:"#f7c948",wow:"#38b2f7"};
 
-const FAKE=[
-  {id:1,nom:"Chloé Beaumont",age:17,niveau:"Terminale S",etablissement:"Lycée Pétion",bio:"Maths & musique 🎹",avatar:"CB",couleur:"#e91e8c",profilePic:null,coverPic:null,photos:["📚","🎹","🌺"],posts:[{id:"p1",text:"Révision réussie 🎯 #scolaire",img:null,reactions:{like:4,fire:1,laugh:0,wow:0},myReaction:null,pinned:false,ts:Date.now()-3600000,comments:[{author:"Marcus Etienne",authorColor:"#1a73e8",text:"Bravo ! 💪"}]},{id:"p2",text:"La physique c'est la vie 😅 #sciences",img:null,reactions:{like:2,fire:0,laugh:1,wow:0},myReaction:null,pinned:false,ts:Date.now()-7200000,comments:[]}],talents:["musique","film"],autretalent:"",isPrivate:false,amis:[],banned:false},
-  {id:2,nom:"Marcus Etienne",age:18,niveau:"Terminale L",etablissement:"Collège Bird",bio:"Écrivain & foot",avatar:"ME",couleur:"#1a73e8",profilePic:null,coverPic:null,photos:["⚽","📖","🏆"],posts:[{id:"p3",text:"Le temps s'effrite comme le sel... #poésie #littérature",img:null,reactions:{like:7,fire:3,laugh:0,wow:2},myReaction:null,pinned:false,ts:Date.now()-5400000,comments:[{author:"Farah Alexis",authorColor:"#9b59b6",text:"Magnifique ✨"}]},{id:"p4",text:"But magnifique à Delmas 32 💪 #football",img:null,reactions:{like:5,fire:2,laugh:0,wow:0},myReaction:null,pinned:false,ts:Date.now()-10800000,comments:[]}],talents:["football","jeux"],autretalent:"",isPrivate:false,amis:[],banned:false},
-  {id:3,nom:"Nadège Pierre",age:16,niveau:"Seconde",etablissement:"Institution Quisqueya",bio:"Future médecin 🩺",avatar:"NP",couleur:"#2ecc71",profilePic:null,coverPic:null,photos:["🩺","🍜","📗"],posts:[{id:"p5",text:"Chimie intense 😤 #sciences #chimie",img:null,reactions:{like:3,fire:0,laugh:2,wow:0},myReaction:null,pinned:false,ts:Date.now()-9000000,comments:[]},{id:"p6",text:"Cuisine créole demain 🍚 #cuisine #haiti",img:null,reactions:{like:9,fire:4,laugh:0,wow:1},myReaction:null,pinned:true,ts:Date.now()-18000000,comments:[{author:"Jean-Luc Moreau",authorColor:"#f39c12",text:"Je viens ! 😄"}]}],talents:["cuisine","autre"],autretalent:"Manga",isPrivate:false,amis:[],banned:false},
-  {id:4,nom:"Jean-Luc Moreau",age:19,niveau:"Rhéto",etablissement:"Lycée Alexandre Pétion",bio:"Robotique & café ☕",avatar:"JM",couleur:"#f39c12",profilePic:null,coverPic:null,photos:["🤖","⚡","☕"],posts:[{id:"p7",text:"Mini-robot éviteur d'obstacles ! #tech #robotique",img:null,reactions:{like:11,fire:6,laugh:0,wow:4},myReaction:null,pinned:true,ts:Date.now()-2000000,comments:[{author:"Chloé Beaumont",authorColor:"#e91e8c",text:"Trop cool 🤖"}]},{id:"p8",text:"Café noir = fuel de révision ☕ #étudiant",img:null,reactions:{like:6,fire:0,laugh:3,wow:0},myReaction:null,pinned:false,ts:Date.now()-86400000,comments:[]}],talents:["jeux","autre"],autretalent:"Robotique",isPrivate:false,amis:[],banned:false},
-  {id:5,nom:"Farah Alexis",age:17,niveau:"Première",etablissement:"Pensionnat de Ville",bio:"Art & philosophie 🎨",avatar:"FA",couleur:"#9b59b6",profilePic:null,coverPic:null,photos:["🎨","💃","🌙"],posts:[{id:"p9",text:"Nouvelle toile terminée 🎨 #art #peinture",img:null,reactions:{like:14,fire:5,laugh:0,wow:6},myReaction:null,pinned:false,ts:Date.now()-4000000,comments:[{author:"Marcus Etienne",authorColor:"#1a73e8",text:"Wow, superbe 😍"}]},{id:"p10",text:"Sartre me rend folle 😅 #philosophie",img:null,reactions:{like:8,fire:1,laugh:4,wow:0},myReaction:null,pinned:false,ts:Date.now()-14400000,comments:[]}],talents:["musique","autre"],autretalent:"Danse & Peinture",isPrivate:false,amis:[],banned:false}
-];
+const FAKE=[];
 
-let ME={id:0,nom:"",age:0,niveau:"",etablissement:"",bio:"",avatar:"",couleur:"#e91e8c",profilePic:null,coverPic:null,photos:[],posts:[],amis:[2,4],demandesEnvoyees:[3],demandesRecues:[1,5],talents:[],autretalent:"",blocked:[],isAdmin:false,isPrivate:false,username:""};
-let convos={2:[{from:2,text:"Salut ! Tu as compris le dernier cours de philo ?",time:"10:23",status:"read",img:null},{from:0,text:"Honnêtement non 😅",time:"10:25",status:"read",img:null}],4:[{from:4,text:"Yo ! Tu veux voir mon robot ce weekend ?",time:"Hier",status:"delivered",img:null}]};
+let ME={id:0,nom:"",age:0,niveau:"",etablissement:"",bio:"",avatar:"",couleur:"#e91e8c",profilePic:null,coverPic:null,photos:[],posts:[],amis:[],demandesEnvoyees:[],demandesRecues:[],talents:[],autretalent:"",blocked:[],isAdmin:false,isPrivate:false,username:""};
+let convos={};
 let activeChat=null,currentTab="home",notifs=[],reports=[],pendingImg=null,dFilter="all";
 
 // ── UTILS ─────────────────────────────────────────────
@@ -788,13 +782,7 @@ async function doRegister(){
   }catch(e){showErr(e.message);btn.textContent=ii("createP");btn.disabled=false;}
 }
 function doLogin(){
-  hideErr();
-  const id=normLId();if(!id){showErr(ii("errEmail"));return;}
-  const pwd=document.getElementById("l-pwd").value;if(!pwd){showErr(ii("errPwd"));return;}
-  const acc=gA();const a=acc[id];
-  if(!a){showErr(ii("errNoAcc"));return;}
-  if(a.pwdHash!==h(pwd)){showErr(ii("errWrong"));return;}
-  svS(a.profil);ME={...ME,...a.profil};launchApp();
+  // Handled by async doLogin above
 }
 function launchApp(){
   document.getElementById("auth").classList.remove("active");
