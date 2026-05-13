@@ -848,6 +848,26 @@ async function loadProfile(){
 // auto-login
 (function(){
   applyLang();
+  // Handle magic link / email confirmation redirect
+  if(window.location.hash && window.location.hash.includes('access_token')){
+    supa.auth.getSession().then(({data:{session}})=>{
+      if(session){
+        currentUser=session.user;
+        loadProfile().then(()=>{
+          document.getElementById("splash").style.display="none";
+          document.getElementById("main").style.display="block";
+          document.getElementById("bnav").style.display="flex";
+          updTopbar();
+          if(ME.isAdmin)document.getElementById("adminlink").style.display="block";
+          document.getElementById("priv-toggle").checked=!!ME.isPrivate;
+          updBadge();updNDot();applyLang();goTab("home");
+          // Clean URL
+          history.replaceState(null,'',window.location.pathname);
+        });
+      }
+    });
+    return;
+  }
   supa.auth.getSession().then(({data:{session}})=>{
     if(session&&session.user){
       currentUser=session.user;
