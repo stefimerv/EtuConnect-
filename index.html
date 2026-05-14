@@ -331,6 +331,7 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
 .adubadge.ok{background:rgba(46,204,113,.15);color:#2ecc71}
 .empty{color:rgba(255,255,255,.38);font-size:14px}
 .ptitle{font-family:var(--fh);font-size:20px;margin:0 0 16px}
+@keyframes slideDown{0%{opacity:0;transform:translateX(-50%) translateY(-10px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -364,6 +365,18 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
   </div>
 </div>
 
+<!-- PWA Install Banner -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1a1a2e,#302b63);padding:14px 16px;z-index:400;border-top:1px solid rgba(233,30,140,.3)">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div style="font-size:28px">🎓</div>
+    <div style="flex:1">
+      <div style="font-family:var(--fh);font-weight:700;font-size:14px;color:#fff">Installer ÉtuConnect</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.5)">Ajouter à l'écran d'accueil</div>
+    </div>
+    <button id="pwa-install-btn" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 14px;color:#fff;font-family:var(--fh);font-weight:700;font-size:13px;cursor:pointer">Installer</button>
+    <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:4px">✕</button>
+  </div>
+</div>
 <!-- AUTH -->
 <div id="auth">
   <div class="abox">
@@ -562,6 +575,39 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
 <div id="moverlay" onclick="closeMod()"><div class="msheet" onclick="event.stopPropagation()"><div class="mtitle" id="mtitle"></div><div id="mbody"></div></div></div>
 </div>
 <script>
+// ── PWA INSTALL ───────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show install banner after 3 seconds
+  setTimeout(() => {
+    const banner = document.getElementById("pwa-banner");
+    if(banner) banner.style.display = "flex";
+  }, 3000);
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("pwa-install-btn");
+  if(btn){
+    btn.addEventListener("click", async () => {
+      if(!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const{outcome} = await deferredPrompt.userChoice;
+      if(outcome === "accepted"){
+        document.getElementById("pwa-banner").style.display = "none";
+      }
+      deferredPrompt = null;
+    });
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  const banner = document.getElementById("pwa-banner");
+  if(banner) banner.style.display = "none";
+  deferredPrompt = null;
+});
+
 // ── SUPABASE ──────────────────────────────────────────
 const SUPA_URL = "https://egswphldeftgtmgpyfek.supabase.co";
 const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVnc3dwaGxkZWZ0Z3RtZ3B5ZmVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2ODMxMTEsImV4cCI6MjA5NDI1OTExMX0.HMfLAIEypgpvnxZFjajGkPNXDiNINGV6_ToPseh75wE";
@@ -630,7 +676,7 @@ const RCOLS={like:"#ff4d7a",fire:"#ff7a1a",laugh:"#f7c948",wow:"#38b2f7"};
 
 const FAKE=[];
 
-let ME={id:0,nom:"",age:0,niveau:"",etablissement:"",bio:"",avatar:"",couleur:"#e91e8c",profilePic:null,coverPic:null,photos:[],posts:[],amis:[],demandesEnvoyees:[],demandesRecues:[],talents:[],autretalent:"",blocked:[],isAdmin:false,isPrivate:false,username:""};
+let ME={id:0,nom:"",age:0,niveau:"",etablissement:"",pays:"",ville:"",bio:"",avatar:"",couleur:"#e91e8c",profilePic:null,coverPic:null,photos:[],posts:[],amis:[],demandesEnvoyees:[],demandesRecues:[],talents:[],autretalent:"",blocked:[],isAdmin:false,isPrivate:false,username:""};
 let convos={};
 let activeChat=null,currentTab="home",notifs=[],reports=[],pendingImg=null,dFilter="all";
 
@@ -640,7 +686,7 @@ const mkAv=(ini,col,pic,sz=44)=>pic?`<div class="av" style="width:${sz}px;height
 const nowt=()=>{const d=new Date();return d.getHours()+":"+(d.getMinutes()<10?"0":"")+d.getMinutes();};
 const showErr=(m)=>{const e=document.getElementById("aerr");e.style.display="block";e.textContent=m;};
 const hideErr=()=>{document.getElementById("aerr").style.display="none";};
-const updBadge=()=>{const b=document.getElementById("fbadge");if(ME.demandesRecues.length>0){b.style.display="block";b.textContent=ME.demandesRecues.length;}else b.style.display="none";};
+// updBadge defined as async function below
 const updNDot=()=>{document.getElementById("ndot").style.display=notifs.filter(n=>!n.read).length>0?"block":"none";};
 const addNotif=(txt)=>{notifs.unshift({id:Date.now(),txt,time:nowt(),read:false});updNDot();};
 const parseHT=(txt)=>{
@@ -747,9 +793,11 @@ async function doRegister(){
   hideErr();
   const age=document.getElementById("r-age").value;
   const niv=document.getElementById("r-niv").value;
-  const etab=document.getElementById("r-etab").value;
+  const etab=document.getElementById("r-etab").value.trim();
   const bio=document.getElementById("r-bio").value.trim();
   if(!age){showErr(ii("errAge"));return;}
+  if(parseInt(age)<13){showErr(lang==="fr"?"Tu dois avoir au moins 13 ans pour t'inscrire.":lang==="en"?"You must be at least 13 years old to sign up.":"Debes tener al menos 13 años para registrarte.");return;}
+  if(parseInt(age)>99){showErr(lang==="fr"?"Âge invalide.":lang==="en"?"Invalid age.":"Edad inválida.");return;}
   if(!niv){showErr(ii("errLevel"));return;}
   if(!etab){showErr(ii("errSchool"));return;}
   const ini=regTmp.nom.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
@@ -769,6 +817,8 @@ async function doRegister(){
     if(error){showErr(error.message);btn.textContent=ii("createP");btn.disabled=false;return;}
     currentUser=data.user;
     // 2. Update profile (trigger creates it, we update the rest)
+    const pays=document.getElementById("r-pays").value.trim();
+    const ville=document.getElementById("r-ville").value.trim();
     const {error:pe}=await supa.from("profiles").update({
       nom:regTmp.nom,
       username:regTmp.username,
@@ -777,7 +827,9 @@ async function doRegister(){
       etablissement:etab,
       bio:bio||"Nouveau sur ÉtuConnect ✨",
       avatar:ini,
-      couleur:col
+      couleur:col,
+      pays:pays||null,
+      ville:ville||null
     }).eq("id",currentUser.id);
     if(pe)console.error("Profile update error:",pe);
     // Check if email confirmation is required
@@ -795,7 +847,22 @@ async function doRegister(){
     }
     currentUser=data.user;
     await loadProfile();
-    launchApp();
+    // Privacy notice for minors
+    if(parseInt(age)<16){
+      const notice=document.createElement("div");
+      notice.style.cssText="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.85);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px";
+      notice.innerHTML=`<div style="background:rgba(30,30,60,.98);border:1px solid rgba(233,30,140,.3);border-radius:18px;padding:24px;max-width:320px;text-align:center">
+        <div style="font-size:36px;margin-bottom:12px">🔒</div>
+        <div style="font-family:var(--fh);font-size:16px;font-weight:700;margin-bottom:10px;color:#fff">${lang==="fr"?"Bienvenue !":lang==="en"?"Welcome!":"¡Bienvenido!"}</div>
+        <div style="color:rgba(255,255,255,.6);font-size:13px;line-height:1.6;margin-bottom:16px">${lang==="fr"?"En tant que mineur, ton profil est privé par défaut. Seuls tes amis peuvent voir tes publications.":"As a minor, your profile is private by default. Only your friends can see your posts."}</div>
+        <button onclick="this.closest('div[style*="fixed"]').remove();launchApp();" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:12px 24px;color:#fff;font-family:var(--fh);font-weight:700;cursor:pointer;width:100%">${lang==="fr"?"J'ai compris":lang==="en"?"Got it":"Entendido"}</button>
+      </div>`;
+      document.body.appendChild(notice);
+      // Auto-set profile to private for minors
+      if(currentUser) await supa.from("profiles").update({is_private:true}).eq("id",currentUser.id);
+    } else {
+      launchApp();
+    }
   }catch(e){showErr(e.message);btn.textContent=ii("createP");btn.disabled=false;}
 }
 function doLogin(){
@@ -833,6 +900,7 @@ async function loadProfile(){
     id:data.id,nom:data.nom,username:data.username,
     age:data.age||0,niveau:data.niveau||"",
     etablissement:data.etablissement||"",
+    pays:data.pays||"",ville:data.ville||"",
     bio:data.bio||"",avatar:data.avatar||"",
     couleur:data.couleur||"#e91e8c",
     profilePic:data.profile_pic,
@@ -847,6 +915,12 @@ async function loadProfile(){
 
 // auto-login
 (function(){
+  // Register Service Worker for PWA
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      console.log("SW registered:",reg.scope);
+    }).catch(err=>console.log("SW error:",err));
+  }
   applyLang();
   // Handle magic link / email confirmation redirect
   if(window.location.hash && window.location.hash.includes('access_token')){
@@ -861,8 +935,8 @@ async function loadProfile(){
           if(ME.isAdmin)document.getElementById("adminlink").style.display="block";
           document.getElementById("priv-toggle").checked=!!ME.isPrivate;
           updBadge();updNDot();applyLang();goTab("home");
-          // Clean URL
           history.replaceState(null,'',window.location.pathname);
+          subscribeToNotifications();
         });
       }
     });
@@ -879,6 +953,7 @@ async function loadProfile(){
         if(ME.isAdmin)document.getElementById("adminlink").style.display="block";
         document.getElementById("priv-toggle").checked=!!ME.isPrivate;
         updBadge();updNDot();applyLang();goTab("home");
+        subscribeToNotifications();
       });
     } else {
       splashAnim();
@@ -1037,13 +1112,13 @@ function supaPostCard(u,p,isMe){
     reactionCounts[r.type]=(reactionCounts[r.type]||0)+1;
     if(currentUser&&r.user_id===currentUser.id)myReaction=r.type;
   });
-  const fakep={id:p.id,text:p.text||"",img:p.img,reactions:reactionCounts,myReaction,pinned:p.pinned,ts:new Date(p.created_at).getTime(),comments:p.comments||[],mood:p.mood,location:p.location,edited:p.edited};
+  const fakep={id:p.id,text:p.text||"",img:p.img,reactions:reactionCounts,myReaction,pinned:p.pinned,ts:new Date(p.created_at).getTime(),comments:p.comments||[],mood:p.mood,location:p.location,edited:p.edited,poll:p.mood?.poll||null};
   const fakeu={id:p.user_id,nom:u.nom,avatar:u.avatar||u.nom?.slice(0,2).toUpperCase()||"?",couleur:u.couleur||"#888",profilePic:u.profile_pic,niveau:u.niveau||"",etablissement:u.etablissement||""};
   return postCard(fakeu,fakep,isMe);
 }
 function publishPost(){
   const txt=document.getElementById("nptxt").value.trim();
-  if(!txt&&!pendingImg)return;
+  if(!txt&&!pendingImg&&!pendingDoc)return;
   const loc=(document.getElementById("loc-input")||{value:""}).value.trim()||null;
   const post={id:"p"+Date.now(),text:txt||"📷",img:pendingImg,reactions:{like:0,fire:0,laugh:0,wow:0},myReaction:null,pinned:false,ts:Date.now(),comments:[],mood:currentMood||null,location:loc};
   ME.posts.unshift(post);
@@ -1128,7 +1203,11 @@ function renderDFilters(){
     {id:"level",l:ii("filterLevel")},
     {id:"interests",l:ii("filterInterests")}
   ];
-  el.innerHTML=chips.map(f=>`<span class="fchip${dFilter===f.id?" active":""}" onclick="setDF('${f.id}')">${f.l}</span>`).join("")+`<span class="fchip" onclick="goTab('map')">🗺️ ${ii("schoolMap")}</span>`;
+  const extraFilters = [
+    {id:"country",l:`🌍 ${ME.pays||"Pays"}`},
+    {id:"city",l:`🏙️ ${ME.ville||"Ville"}`}
+  ];
+  el.innerHTML=[...chips,...extraFilters].map(f=>`<span class="fchip${dFilter===f.id?" active":""}" onclick="setDF('${f.id}')">${f.l}</span>`).join("");
 }
 function setDF(f){dFilter=f;renderDFilters();renderDiscover();}
 
@@ -1159,38 +1238,76 @@ function commonTags(u){
   return tags.slice(0,2);
 }
 
-function renderDiscover(){
+async function renderDiscover(){
   const q=(document.getElementById("dsearch")||{value:""}).value.trim().toLowerCase();
-  let users=FAKE.filter(u=>!(ME.blocked||[]).includes(u.id)&&!u.banned);
-  if(q)users=users.filter(u=>u.nom.toLowerCase().includes(q)||u.etablissement.toLowerCase().includes(q)||u.niveau.toLowerCase().includes(q)||u.talents.some(t=>t.toLowerCase().includes(q)));
-  if(dFilter==="school")users=users.filter(u=>u.etablissement===ME.etablissement);
-  else if(dFilter==="level")users=users.filter(u=>u.niveau===ME.niveau);
-  else if(dFilter==="fof")users=users.filter(u=>!ME.amis.includes(u.id)&&FAKE.filter(f=>ME.amis.includes(f.id)).some(f=>(f.amis||[]).includes(u.id)));
-  else if(dFilter==="interests"){
-    users=users.filter(u=>{
-      const myT=ME.talents||[];const theirT=u.talents||[];
-      return myT.some(t=>theirT.includes(t))||u.niveau===ME.niveau||Math.abs((u.age||0)-(ME.age||0))<=1;
-    });
-    users.sort((a,b)=>matchScore(b)-matchScore(a));
-  }
+  const el=document.getElementById("dlist")||document.getElementById("discover-list");
+  const container=document.querySelector("#tab-discover .dlist")||document.querySelector(".dlist");
 
-  // Suggestions intelligentes (filtre all, pas de recherche)
-  let html="";
-  if(!q&&dFilter==="all"&&ME.nom){
-    const notFriend=users.filter(u=>!ME.amis.includes(u.id));
-    // Score chaque utilisateur
-    const scored=notFriend.map(u=>({u,score:matchScore(u)})).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,3);
-    if(scored.length){
-      html+=`<p style="font-family:var(--fh);font-size:13px;color:var(--acc);margin-bottom:10px">✨ ${ii("suggestTitle")}</p>`;
-      html+=scored.map(({u,score})=>userCard(u,score)).join("");
-      html+=`<div style="height:1px;background:rgba(255,255,255,.07);margin:14px 0"></div>`;
+  // Show filters for country/city/level
+  renderDFilters();
+
+  try{
+    let query=supa.from("profiles").select("*").neq("id",currentUser?.id||"00000000-0000-0000-0000-000000000000").limit(50);
+
+    // Apply filters
+    if(dFilter==="school"&&ME.etablissement) query=query.eq("etablissement",ME.etablissement);
+    else if(dFilter==="level"&&ME.niveau) query=query.eq("niveau",ME.niveau);
+    else if(dFilter==="country"&&ME.pays) query=query.eq("pays",ME.pays);
+    else if(dFilter==="city"&&ME.ville) query=query.eq("ville",ME.ville);
+
+    const{data:users,error}=await query;
+    if(error)throw error;
+
+    let filtered=users||[];
+
+    // Text search
+    if(q){
+      filtered=filtered.filter(u=>
+        (u.nom||"").toLowerCase().includes(q)||
+        (u.etablissement||"").toLowerCase().includes(q)||
+        (u.niveau||"").toLowerCase().includes(q)||
+        (u.pays||"").toLowerCase().includes(q)||
+        (u.ville||"").toLowerCase().includes(q)
+      );
     }
-  }
 
-  const list=users.map(u=>userCard(u,dFilter==="interests"?matchScore(u):null)).join("");
-  document.getElementById("dlist").innerHTML=html+list||`<p class="empty" style="text-align:center;padding:30px">🔍</p>`;
+    // Remove blocked users
+    filtered=filtered.filter(u=>!(ME.blocked||[]).includes(u.id));
+
+    const dEl=document.getElementById("dlist");
+    if(!dEl)return;
+
+    if(filtered.length===0){
+      dEl.innerHTML=`<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">🔍 ${lang==="fr"?"Aucun élève trouvé":lang==="en"?"No students found":"Ningún estudiante encontrado"}</p>`;
+      return;
+    }
+
+    dEl.innerHTML=filtered.map(u=>{
+      const fakeu={id:u.id,nom:u.nom||"?",avatar:u.avatar||"?",couleur:u.couleur||"#888",profilePic:u.profile_pic,niveau:u.niveau||"",etablissement:u.etablissement||"",pays:u.pays||"",ville:u.ville||""};
+      return supaUserCard(fakeu);
+    }).join("");
+
+  }catch(e){
+    console.error("Discover error:",e);
+    const dEl=document.getElementById("dlist");
+    if(dEl)dEl.innerHTML=`<p style="text-align:center;color:rgba(255,255,255,.3);padding:20px;font-size:13px">⚠️ Erreur de chargement</p>`;
+  }
 }
 
+function supaUserCard(u){
+  const lc=levelColor(u.niveau||"");
+  const loc=[u.ville,u.pays].filter(Boolean).join(", ");
+  return `<div class="ucard" onclick="viewProfile(${JSON.stringify(u).replace(/"/g,'&quot;')})">
+    ${mkAv(u.avatar,u.couleur,u.profilePic,48)}
+    <div style="flex:1;min-width:0">
+      <div style="font-family:var(--fh);font-size:14px;font-weight:700">${u.nom}</div>
+      ${u.niveau?`<span class="lvlbadge" style="border-color:${lc}44;color:${lc}">${u.niveau}</span>`:""}
+      ${u.etablissement?`<div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:2px">🏫 ${u.etablissement}</div>`:""}
+      ${loc?`<div style="color:rgba(255,255,255,.35);font-size:11px">📍 ${loc}</div>`:""}
+    </div>
+    <button class="bsm" onclick="event.stopPropagation();sendFriendReq(${u.id})" style="background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.3);color:var(--acc)">+</button>
+  </div>`;
+}
 function userCard(u,score){
   const sent=ME.demandesEnvoyees.includes(u.id),isAmi=ME.amis.includes(u.id);
   const lc=levelColor(u.niveau);
@@ -1203,6 +1320,82 @@ function userCard(u,score){
 function sendReq(id){if(!ME.demandesEnvoyees.includes(id))ME.demandesEnvoyees.push(id);persistMe();renderDiscover();}
 
 // ── FRIENDS ───────────────────────────────────────────
+async function renderFriends(){
+  const el=document.getElementById("flist");
+  if(!el)return;
+  if(!currentUser){el.innerHTML='';return;}
+  try{
+    const{data:friendships}=await supa.from("friendships")
+      .select("*, requester:requester_id(id,nom,avatar,couleur,profile_pic,niveau,etablissement), addressee:addressee_id(id,nom,avatar,couleur,profile_pic,niveau,etablissement)")
+      .or("requester_id.eq."+currentUser.id+",addressee_id.eq."+currentUser.id)
+      .eq("status","accepted");
+    
+    const{data:pending}=await supa.from("friendships")
+      .select("*, requester:requester_id(id,nom,avatar,couleur,profile_pic,niveau)")
+      .eq("addressee_id",currentUser.id)
+      .eq("status","pending");
+    
+    const{data:sent}=await supa.from("friendships")
+      .select("*, addressee:addressee_id(id,nom,avatar,couleur,profile_pic,niveau)")
+      .eq("requester_id",currentUser.id)
+      .eq("status","pending");
+    
+    let html="";
+    
+    // Pending requests
+    if(pending&&pending.length>0){
+      html+=`<div class="slabel" style="margin-bottom:8px">${ii("requests")} (${pending.length})</div>`;
+      html+=pending.map(f=>`
+        <div class="ucard" style="margin-bottom:8px">
+          ${mkAv(f.requester.avatar,f.requester.couleur,f.requester.profile_pic,44)}
+          <div style="flex:1"><div style="font-family:var(--fh);font-weight:700">${f.requester.nom}</div><div style="font-size:12px;color:rgba(255,255,255,.4)">${f.requester.niveau||""}</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="bsm" style="background:rgba(46,204,113,.2);border-color:rgba(46,204,113,.4);color:#2ecc71" onclick="acceptFriend('${f.id}')">✓</button>
+            <button class="bsm" style="background:rgba(231,76,60,.2);border-color:rgba(231,76,60,.4);color:#e74c3c" onclick="rejectFriend('${f.id}')">✕</button>
+          </div>
+        </div>`).join("");
+    }
+    
+    // Friends
+    const friends=(friendships||[]).map(f=>f.requester_id===currentUser.id?f.addressee:f.requester);
+    if(friends.length>0){
+      html+=`<div class="slabel" style="margin:10px 0 8px">${ii("myFriends")} (${friends.length})</div>`;
+      html+=friends.map(u=>`
+        <div class="ucard" style="margin-bottom:8px" onclick="startChat('${u.id}','${u.nom}','${u.avatar}','${u.couleur}','${u.profile_pic||''}')">
+          ${mkAv(u.avatar,u.couleur,u.profile_pic,44)}
+          <div style="flex:1"><div style="font-family:var(--fh);font-weight:700">${u.nom}</div><div style="font-size:12px;color:rgba(255,255,255,.4)">${u.niveau||""} ${u.etablissement?"· "+u.etablissement:""}</div></div>
+          <button class="bsm" onclick="event.stopPropagation();startChat('${u.id}','${u.nom}','${u.avatar}','${u.couleur}','${u.profile_pic||''}')">💬</button>
+        </div>`).join("");
+    }
+    
+    if(!html)html=`<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">Aucun ami pour l'instant</p>`;
+    el.innerHTML=html;
+  }catch(e){console.error("Friends error:",e);}
+}
+
+async function acceptFriend(friendshipId){
+  await supa.from("friendships").update({status:"accepted"}).eq("id",friendshipId);
+  renderFriends();
+}
+
+async function rejectFriend(friendshipId){
+  await supa.from("friendships").delete().eq("id",friendshipId);
+  renderFriends();
+}
+
+async function sendFriendReq(userId){
+  if(!currentUser)return;
+  try{
+    await supa.from("friendships").insert({requester_id:currentUser.id,addressee_id:userId,status:"pending"});
+    showNotifToast(lang==="fr"?"Demande envoyée !":lang==="en"?"Request sent!":"¡Solicitud enviada!");
+  }catch(e){console.error("Friend req error:",e);}
+}
+
+function startChat(id,nom,avatar,couleur,pic){
+  goTab("messages");
+  setTimeout(()=>openChat(id,nom,avatar,couleur,pic),100);
+}
+
 function renderFriends(){
   updBadge();
   let dHtml="";
@@ -1332,7 +1525,9 @@ function renderProfilePage(u,isOwn){
     </div>
     ${isOwn?`<input type="file" id="avpick" accept="image/*" style="display:none" onchange="applyAvatar(event)"><input type="file" id="cvpick" accept="image/*" style="display:none" onchange="applyCover(event)">`:""}
     <div class="pbody">
-      ${isOwn?`<div id="editform" style="display:none"><div class="card" style="padding:18px;margin-bottom:16px"><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">NOM</label><input id="ef-nom" value="${ME.nom}" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">BIO</label><input id="ef-bio" value="${ME.bio}" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("level")}</label><select id="ef-niv" style="width:100%;background:var(--bg2);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-family:var(--fb);font-size:14px;outline:none"><option value="">—</option><option${ME.niveau==="6e"?" selected":""}>6e</option><option${ME.niveau==="5e"?" selected":""}>5e</option><option${ME.niveau==="4e"?" selected":""}>4e</option><option${ME.niveau==="3e"?" selected":""}>3e</option><option${ME.niveau==="Seconde"?" selected":""}>Seconde</option><option${ME.niveau==="Première"?" selected":""}>Première</option><option${ME.niveau==="Terminale L"?" selected":""}>Terminale L</option><option${ME.niveau==="Terminale S"?" selected":""}>Terminale S</option><option${ME.niveau==="Terminale ES"?" selected":""}>Terminale ES</option><option${ME.niveau==="Rhéto"?" selected":""}>Rhéto</option><option${ME.niveau==="Philo"?" selected":""}>Philo</option></select></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("school")}</label><select id="ef-etab" style="width:100%;background:var(--bg2);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-family:var(--fb);font-size:14px;outline:none"><option value="">—</option><option${ME.etablissement==="Lycée Pétion"?" selected":""}>Lycée Pétion</option><option${ME.etablissement==="Collège Bird"?" selected":""}>Collège Bird</option><option${ME.etablissement==="Institution Quisqueya"?" selected":""}>Institution Quisqueya</option><option${ME.etablissement==="Pensionnat de Ville"?" selected":""}>Pensionnat de Ville</option><option${ME.etablissement==="Lycée Alexandre Pétion"?" selected":""}>Lycée Alexandre Pétion</option><option${ME.etablissement==="École Nationale"?" selected":""}>École Nationale</option><option${ME.etablissement==="Autre"?" selected":""}>Autre</option></select></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("talents")}</label>${renderTalentsEdit()}</div><div class="esave"><button class="btnsave" onclick="saveEdit()">${ii("save")}</button><button class="btncancel" onclick="document.getElementById('editform').style.display='none'">${ii("cancel")}</button></div></div></div>`:""}
+      ${isOwn?`<div id="editform" style="display:none"><div class="card" style="padding:18px;margin-bottom:16px"><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">NOM</label><input id="ef-nom" value="${ME.nom}" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">BIO</label><input id="ef-bio" value="${ME.bio}" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("level")}</label><select id="ef-niv" style="width:100%;background:var(--bg2);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-family:var(--fb);font-size:14px;outline:none"><option value="">—</option><option${ME.niveau==="6e"?" selected":""}>6e</option><option${ME.niveau==="5e"?" selected":""}>5e</option><option${ME.niveau==="4e"?" selected":""}>4e</option><option${ME.niveau==="3e"?" selected":""}>3e</option><option${ME.niveau==="Seconde"?" selected":""}>Seconde</option><option${ME.niveau==="Première"?" selected":""}>Première</option><option${ME.niveau==="Terminale L"?" selected":""}>Terminale L</option><option${ME.niveau==="Terminale S"?" selected":""}>Terminale S</option><option${ME.niveau==="Terminale ES"?" selected":""}>Terminale ES</option><option${ME.niveau==="Rhéto"?" selected":""}>Rhéto</option><option${ME.niveau==="Philo"?" selected":""}>Philo</option></select></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("school")}</label><input id="ef-etab" value="${ME.etablissement}" placeholder="Nom de ton école" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div>
+<div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">🌍 PAYS</label><input id="ef-pays" value="${ME.pays||''}" placeholder="Ex: France, Haïti..." style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div>
+<div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">🏙️ VILLE</label><input id="ef-ville" value="${ME.ville||''}" placeholder="Ex: Paris, Port-au-Prince..." style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div><div style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("talents")}</label>${renderTalentsEdit()}</div><div class="esave"><button class="btnsave" onclick="saveEdit()">${ii("save")}</button><button class="btncancel" onclick="document.getElementById('editform').style.display='none'">${ii("cancel")}</button></div></div></div>`:""}
       <div class="pname">${u.nom}</div>
       <div class="psub2">${u.age} ${lang==="es"?"años":lang==="en"?"y.o.":"ans"} · ${u.etablissement} ${badge}${u.isPrivate?` <span class="lvlbadge">🔒</span>`:""}</div>
       <div class="pbio">${u.bio}</div>
@@ -1377,12 +1572,15 @@ async function saveEdit(){
   const etab=document.getElementById("ef-etab");if(etab&&etab.value)ME.etablissement=etab.value;
   const ai=document.getElementById("aut-inp");if(ai)ME.autretalent=ai.value.trim();
   ME.avatar=ME.nom.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+  const ep=document.getElementById("ef-pays");if(ep)ME.pays=ep.value.trim();
+  const ev=document.getElementById("ef-ville");if(ev)ME.ville=ev.value.trim();
   if(currentUser){
     await supa.from("profiles").update({
       nom:ME.nom,bio:ME.bio,niveau:ME.niveau,
       etablissement:ME.etablissement,
       autre_talent:ME.autretalent,
-      avatar:ME.avatar,talents:ME.talents
+      avatar:ME.avatar,talents:ME.talents,
+      pays:ME.pays||null,ville:ME.ville||null
     }).eq("id",currentUser.id);
   }
   persistMe();updTopbar();renderMyProfile();
@@ -1391,6 +1589,48 @@ function addPhotoEmoji(){const inp=document.getElementById("ph-inp");const emoji
 function addPhotoFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{ME.photos.unshift(ev.target.result);persistMe();renderMyProfile();};r.readAsDataURL(f);}
 
 // ── NOTIFS ────────────────────────────────────────────
+async function renderNotifs(){
+  const el=document.getElementById("nlist");
+  if(!el)return;
+  if(!currentUser){el.innerHTML="";return;}
+  try{
+    const{data:notifData}=await supa.from("notifications")
+      .select("*")
+      .eq("user_id",currentUser.id)
+      .order("created_at",{ascending:false})
+      .limit(30);
+    
+    if(!notifData||notifData.length===0){
+      el.innerHTML=`<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">${ii("noNf")}</p>`;
+      return;
+    }
+    
+    el.innerHTML=notifData.map(n=>`
+      <div class="nrow${n.read?"":" unread"}" onclick="markNotifRead('${n.id}')">
+        <div style="font-size:20px">${n.type==="like"?"❤️":n.type==="comment"?"💬":n.type==="friend_request"?"👤":n.type==="friend_accept"?"✅":"🔔"}</div>
+        <div style="flex:1">
+          <div style="font-size:13px">${n.text}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:2px">${new Date(n.created_at).toLocaleString()}</div>
+        </div>
+        ${!n.read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--acc);flex-shrink:0"></div>':""}
+      </div>`).join("");
+    
+    // Mark all as read
+    await supa.from("notifications").update({read:true}).eq("user_id",currentUser.id).eq("read",false);
+    updBadge();
+  }catch(e){console.error("Notifs error:",e);}
+}
+
+async function markNotifRead(id){
+  await supa.from("notifications").update({read:true}).eq("id",id);
+}
+
+async function updBadge(){
+  if(!currentUser)return;
+  const{count}=await supa.from("notifications").select("*",{count:"exact",head:true}).eq("user_id",currentUser.id).eq("read",false);
+  updNDot(count||0);
+}
+
 function renderNotifs(){notifs.forEach(n=>n.read=true);updNDot();document.getElementById("nflist").innerHTML=notifs.length?notifs.map(n=>`<div class="card nfitem"><div class="nfdot r"></div><div><div class="nftext">${n.txt}</div><div class="nftime">${n.time}</div></div></div>`).join(""):`<p class="empty" style="text-align:center;padding:30px">${ii("noNf")}</p>`;}
 function clearNotifs(){notifs=[];renderNotifs();}
 
@@ -1411,10 +1651,73 @@ let activeGroup = null;
 let gPendingImg = null;
 
 // ── GROUPS RENDER ─────────────────────────────────────
-function renderGroups(){
+async function renderGroups(){
   document.getElementById("glist-wrap").style.display = "block";
   document.getElementById("gview").style.display = "none";
   document.getElementById("bnav").style.display = "flex";
+  
+  if(!currentUser){renderGroupsLocal();return;}
+  
+  try{
+    // Load clubs from Supabase
+    const{data:clubs,error}=await supa.from("clubs")
+      .select("*, club_members(user_id,status), profiles(nom,avatar,couleur,profile_pic)")
+      .order("created_at",{ascending:false});
+    
+    if(error)throw error;
+    
+    const myClubs = (clubs||[]).filter(c=>
+      c.admin_id===currentUser.id ||
+      (c.club_members||[]).some(m=>m.user_id===currentUser.id&&m.status==="accepted")
+    );
+    const pendingInvites = (clubs||[]).filter(c=>
+      (c.club_members||[]).some(m=>m.user_id===currentUser.id&&m.status==="pending")
+    );
+    
+    const invEl = document.getElementById("ginvites");
+    if(pendingInvites.length){
+      invEl.innerHTML = `<div class="slabel" style="margin-bottom:10px">${ii("invites")}</div>` +
+        pendingInvites.map(g=>`
+          <div class="card" style="padding:14px;margin-bottom:10px;border-color:rgba(233,30,140,.3)">
+            <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">
+              <div class="av" style="width:44px;height:44px;font-size:16px;background:${g.color||'#e91e8c'}">${g.emoji||"👥"}</div>
+              <div><div style="font-family:var(--fh);font-weight:700">${g.name}</div><div style="color:rgba(255,255,255,.4);font-size:12px">${g.description||""}</div></div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="mbtn" style="flex:1;margin:0" onclick="acceptClub('${g.id}')">${ii("accept")}</button>
+              <button class="mbtn cancel" style="flex:1;margin:0" onclick="rejectClub('${g.id}')">${ii("refuse")}</button>
+            </div>
+          </div>`).join("");
+    } else {
+      invEl.innerHTML = "";
+    }
+    
+    const gEl = document.getElementById("glist");
+    if(myClubs.length===0){
+      gEl.innerHTML = `<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">👥 ${ii("noGroups")}</p>`;
+    } else {
+      gEl.innerHTML = myClubs.map(g=>{
+        const memberCount = (g.club_members||[]).filter(m=>m.status==="accepted").length;
+        return `<div class="card" style="padding:14px;margin-bottom:10px;cursor:pointer" onclick="openClub('${g.id}','${g.name}','${g.emoji||'👥'}','${g.color||'#e91e8c'}')">
+          <div style="display:flex;gap:10px;align-items:center">
+            <div class="av" style="width:48px;height:48px;font-size:20px;background:${g.color||'#e91e8c'}">${g.emoji||"👥"}</div>
+            <div style="flex:1">
+              <div style="font-family:var(--fh);font-weight:700;font-size:15px">${g.name}</div>
+              <div style="color:rgba(255,255,255,.4);font-size:12px">${g.description||""}</div>
+              <div style="color:rgba(255,255,255,.3);font-size:11px;margin-top:2px">👥 ${memberCount} membre${memberCount>1?"s":""} ${g.admin_id===currentUser.id?"· 👑 Admin":""}</div>
+            </div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+    return;
+  }catch(e){
+    console.error("Groups error:",e);
+  }
+  renderGroupsLocal();
+}
+
+function renderGroupsLocal(){
 
   // Invitations en attente
   const myInvites = groups.filter(g => (g.invites||[]).includes(ME.id));
@@ -1862,7 +2165,16 @@ function publishStory(){
   const bg=document.getElementById("st-bg").value;
   if(!txt&&!storyImg){alert(lang==="fr"?"Ajoute du texte ou une photo.":lang==="en"?"Add text or a photo.":"Agrega texto o foto.");return;}
   myStories.unshift({id:Date.now(),userId:0,text:txt,img:storyImg,bg,ts:Date.now(),seen:false});
-  storyImg=null;closeMod();renderStories();
+  // Save to Supabase
+  if(currentUser){
+    supa.from("stories").insert({
+      user_id:currentUser.id,
+      text:txt||null,
+      img:storyImg||null,
+      bg:selectedStoryBg
+    }).then(({error})=>{if(error)console.error("Story save:",error);});
+  }
+  storyImg=null;selectedStoryBg=STORY_BGGRADIENTS[0];closeMod();renderStories();
 }
 
 let svCurrentList = [], svCurrentIdx = 0;
@@ -2058,4 +2370,22 @@ function persistMe(){const acc=gA();for(const k in acc){if(acc[k].profil&&acc[k]
 })();
 </script>
 </body>
-</html>
+</html>async function createGroupSupa(){
+  const name=document.getElementById("ng-name").value.trim();
+  const desc=document.getElementById("ng-desc").value.trim();
+  const emoji=document.getElementById("ng-emoji").value.trim()||"👥";
+  const color=document.getElementById("ng-color").value||"#e91e8c";
+  if(!name){alert("Donne un nom au club.");return;}
+  if(!currentUser){alert("Tu dois être connecté.");return;}
+  try{
+    const{data,error}=await supa.from("clubs").insert({
+      name,description:desc||null,emoji,color,admin_id:currentUser.id
+    }).select().single();
+    if(error)throw error;
+    // Auto-join as member
+    await supa.from("club_members").insert({club_id:data.id,user_id:currentUser.id,status:"accepted"});
+    closeMod();renderGroups();
+  }catch(e){alert("Erreur: "+e.message);}
+}
+
+
