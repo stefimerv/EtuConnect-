@@ -422,7 +422,7 @@ function goTab(tab){
   if(tab==="home"){renderFeed();renderStories();}
   else if(tab==="discover")renderDiscover();
   else if(tab==="messages")renderMessages();
-  else if(tab==="groups")renderGroups();
+  else if(tab==="groups"){renderGroups();}
   else if(tab==="settings")renderSettingsProfile();
 }
 
@@ -1151,7 +1151,7 @@ async function renderEvents(){
   var el=qs("events-list");if(!el)return;
   el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
   try{
-    var res=await supa.from("events").select("*,profiles(nom,avatar,couleur,profile_pic),event_attendees(count)").order("event_date",{ascending:true});
+    var res=await supa.from("events").select("*,event_attendees(count)").order("event_date",{ascending:true});
     var evts=res.data||[];
     if(!evts.length){
       el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun événement.<br>Crée le premier!</p>";
