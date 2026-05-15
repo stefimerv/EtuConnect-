@@ -55,7 +55,7 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
 #topbar{position:sticky;top:0;background:rgba(15,12,41,.95);backdrop-filter:blur(10px);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:100;border-bottom:1px solid rgba(255,255,255,.08)}
 .topbar-logo{font-family:var(--fh);font-size:18px;font-weight:900}
 .topbar-logo span{color:var(--acc)}
-.tab{display:none;padding:12px}
+.tab{display:none;padding:12px;padding-top:8px}
 .tab.active{display:block}
 #bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,12,41,.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08);display:flex;z-index:100}
 .nb{flex:1;background:none;border:none;color:rgba(255,255,255,.4);padding:10px 0;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -247,7 +247,7 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
   <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">👤</span><span>Moi</span></button>
 </div>
 
-<div id="tab-groups" class="tab" style="padding-top:8px">
+<div id="tab-groups" class="tab">
   <!-- Sub tabs + create button on same row -->
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
     <div style="display:flex;background:rgba(255,255,255,.08);border-radius:12px;padding:3px;flex:1">
@@ -410,6 +410,7 @@ function goTab(tab){
   var pg=qs("tab-"+tab);if(pg)pg.classList.add("active");
   document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("active");});
   var nb=qs("nav-"+tab);if(nb)nb.classList.add("active");
+  window.scrollTo(0,0);
   if(tab==="home"){renderFeed();renderStories();}
   else if(tab==="discover")renderDiscover();
   else if(tab==="messages")renderMessages();
@@ -461,18 +462,32 @@ function addStory(){
 }
 
 var pendingStoryImg=null;
+function compressImg(dataUrl, maxW, quality, cb){
+  var img=new Image();
+  img.onload=function(){
+    var canvas=document.createElement("canvas");
+    var w=Math.min(img.width,maxW);
+    var h=img.height*(w/img.width);
+    canvas.width=w;canvas.height=h;
+    canvas.getContext("2d").drawImage(img,0,0,w,h);
+    cb(canvas.toDataURL("image/jpeg",quality));
+  };
+  img.src=dataUrl;
+}
 function previewStory(e){
   var f=e.target.files[0];if(!f)return;
   var r=new FileReader();
   r.onload=function(ev){
-    pendingStoryImg=ev.target.result;
-    var p=qs("story-preview");
-    if(p){
-      var img=document.createElement("img");
-      img.src=ev.target.result;
-      img.style.cssText="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:8px";
-      p.innerHTML="";p.appendChild(img);
-    }
+    compressImg(ev.target.result,800,0.7,function(compressed){
+      pendingStoryImg=compressed;
+      var p=qs("story-preview");
+      if(p){
+        var img=document.createElement("img");
+        img.src=compressed;
+        img.style.cssText="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:8px";
+        p.innerHTML="";p.appendChild(img);
+      }
+    });
   };
   r.readAsDataURL(f);
 }
@@ -745,7 +760,18 @@ async function renderSettingsProfile(){
   await loadProfile();
   var av=qs("settings-av");
   var ini=(ME.avatar||(ME.nom||"?").slice(0,2).toUpperCase()).trim();
-  if(av)av.innerHTML=mkAv(ini,ME.couleur,ME.profile_pic,56);
+  if(av){
+    if(ME.profile_pic){
+      // Direct DOM approach for base64 image
+      var img=document.createElement("img");
+      img.src=ME.profile_pic;
+      img.style.cssText="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--acc)";
+      av.innerHTML="";
+      av.appendChild(img);
+    } else {
+      av.innerHTML=mkAv(ini,ME.couleur,null,56);
+    }
+  }
   var n=qs("settings-nom");if(n)n.textContent=ME.nom||"?";
   var u=qs("settings-username");if(u)u.textContent=(ME.username||"")+(ME.niveau?" · "+ME.niveau:"");
 }
@@ -1229,14 +1255,16 @@ function previewEditPic(e){
   var f=e.target.files[0];if(!f)return;
   var r=new FileReader();
   r.onload=function(ev){
-    pendingProfilePic=ev.target.result;
-    var p=qs("edit-pic-preview");
-    if(p){
-      var img=document.createElement("img");
-      img.src=ev.target.result;
-      img.style.cssText="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--acc)";
-      p.innerHTML="";p.appendChild(img);
-    }
+    compressImg(ev.target.result,400,0.8,function(compressed){
+      pendingProfilePic=compressed;
+      var p=qs("edit-pic-preview");
+      if(p){
+        var img=document.createElement("img");
+        img.src=compressed;
+        img.style.cssText="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--acc)";
+        p.innerHTML="";p.appendChild(img);
+      }
+    });
   };
   r.readAsDataURL(f);
 }
