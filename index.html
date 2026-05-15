@@ -815,16 +815,12 @@ function splashAnim(){
   }catch(e){}
 
   function show(id){
-    const splash=document.getElementById("splash");
-    if(!splash||splash.style.display==="none")return;
     const n=document.getElementById(id);
     if(!n)return;
     n.style.opacity="1";
     n.style.transform="scale(1)";
   }
   function showClass(id){
-    const splash=document.getElementById("splash");
-    if(!splash||splash.style.display==="none")return;
     const n=document.getElementById(id);
     if(!n)return;
     n.style.opacity="1";
@@ -1123,6 +1119,7 @@ async function loadProfile(){
     }).catch(err=>console.log("SW error:",err));
   }
   applyLang();
+  splashAnim(); // Start animation immediately
   // Handle magic link / email confirmation redirect
   if(window.location.hash && window.location.hash.includes('access_token')){
     supa.auth.getSession().then(({data:{session}})=>{
