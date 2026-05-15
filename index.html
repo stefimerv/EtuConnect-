@@ -331,6 +331,13 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
 .adubadge.ok{background:rgba(46,204,113,.15);color:#2ecc71}
 .empty{color:rgba(255,255,255,.38);font-size:14px}
 .ptitle{font-family:var(--fh);font-size:20px;margin:0 0 16px}
+.pwd-wrap{position:relative;display:flex;align-items:center}
+.pwd-wrap input{flex:1;padding-right:44px !important}
+.pwd-toggle{position:absolute;right:12px;background:none;border:none;color:rgba(255,255,255,.4);font-size:16px;cursor:pointer;padding:4px;line-height:1}
+.pwd-toggle:hover{color:#fff}
+@keyframes typingDot{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+@keyframes slideUp{0%{transform:translateY(100%);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
 @keyframes slideDown{0%{opacity:0;transform:translateX(-50%) translateY(-10px)}100%{opacity:1;transform:translateX(-50%) translateY(0)}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -365,8 +372,8 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
   </div>
 </div>
 
-<!-- PWA Install Banner -->
-<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1a1a2e,#302b63);padding:14px 16px;z-index:400;border-top:1px solid rgba(233,30,140,.3)">
+<!-- PWA Install Banner (Android) -->
+<div id="pwa-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1a1a2e,#302b63);padding:14px 16px;z-index:400;border-top:1px solid rgba(233,30,140,.3);animation:slideUp .3s ease">
   <div style="display:flex;align-items:center;gap:12px">
     <div style="font-size:28px">🎓</div>
     <div style="flex:1">
@@ -376,6 +383,34 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
     <button id="pwa-install-btn" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 14px;color:#fff;font-family:var(--fh);font-weight:700;font-size:13px;cursor:pointer">Installer</button>
     <button onclick="document.getElementById('pwa-banner').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer;padding:4px">✕</button>
   </div>
+</div>
+
+<!-- PWA Install Banner (iOS) -->
+<div id="ios-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1a1a2e,#302b63);padding:16px;z-index:400;border-top:1px solid rgba(233,30,140,.3);animation:slideUp .3s ease">
+  <button onclick="document.getElementById('ios-banner').style.display='none'" style="position:absolute;top:10px;right:12px;background:none;border:none;color:rgba(255,255,255,.4);font-size:18px;cursor:pointer">✕</button>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <div style="font-size:28px">🎓</div>
+    <div>
+      <div style="font-family:var(--fh);font-weight:700;font-size:14px;color:#fff">Installer ÉtuConnect</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.5)">Accès rapide depuis l'écran d'accueil</div>
+    </div>
+  </div>
+  <div style="background:rgba(255,255,255,.06);border-radius:12px;padding:12px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.8">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:18px">1️⃣</span>
+      <span>Appuie sur <strong style="color:#fff">Partager</strong> <span style="font-size:16px">⬆️</span> en bas de Safari</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:18px">2️⃣</span>
+      <span>Sélectionne <strong style="color:#fff">"Sur l'écran d'accueil"</strong></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:18px">3️⃣</span>
+      <span>Appuie sur <strong style="color:#fff">"Ajouter"</strong></span>
+    </div>
+  </div>
+  <!-- Arrow pointing to share button -->
+  <div style="text-align:center;margin-top:8px;font-size:24px;animation:bounce 1s ease infinite">↓</div>
 </div>
 <!-- AUTH -->
 <div id="auth">
@@ -535,10 +570,10 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
       <div class="ssec"><div class="slabel" id="slbl-th"></div><div class="tgrd"><div class="tswatch selected" id="sw-violet" onclick="setTheme('violet')" style="background:linear-gradient(135deg,#0f0c29,#302b63)"><div class="tswc" style="background:linear-gradient(135deg,#e91e8c,#7b1fa2)"></div><div class="tswn" id="swn-v">Violet</div></div><div class="tswatch" id="sw-ocean" onclick="setTheme('ocean')" style="background:linear-gradient(135deg,#021e38,#0c3b60)"><div class="tswc" style="background:linear-gradient(135deg,#0ea5e9,#0c4a6e)"></div><div class="tswn" id="swn-o">Océan</div></div><div class="tswatch" id="sw-forest" onclick="setTheme('forest')" style="background:linear-gradient(135deg,#052010,#0f3d1e)"><div class="tswc" style="background:linear-gradient(135deg,#22c55e,#14532d)"></div><div class="tswn" id="swn-f">Forêt</div></div><div class="tswatch" id="sw-sunset" onclick="setTheme('sunset')" style="background:linear-gradient(135deg,#1c0a00,#3b1600)"><div class="tswc" style="background:linear-gradient(135deg,#f97316,#7c2d12)"></div><div class="tswn" id="swn-s">Coucher</div></div></div></div>
       <div class="ssec"><div class="slabel" id="slbl-fn"></div><div class="fgrd"><div class="fcrd selected" id="fc-default" onclick="setFont('default')"><div class="fcrdname">DM Sans / Syne</div><div class="fcrdprev" style="font-family:'Syne',sans-serif">ÉtuConnect<br><span style="font-family:'DM Sans',sans-serif;font-size:12px;opacity:.6">Moderne</span></div></div><div class="fcrd" id="fc-playfair" onclick="setFont('playfair')"><div class="fcrdname">Playfair Display</div><div class="fcrdprev" style="font-family:'Playfair Display',serif">ÉtuConnect<br><span style="font-size:12px;opacity:.6">Classique</span></div></div><div class="fcrd" id="fc-mono" onclick="setFont('mono')"><div class="fcrdname">Space Mono</div><div class="fcrdprev" style="font-family:'Space Mono',monospace;font-size:13px">EtuConnect<br><span style="font-size:11px;opacity:.6">Tech</span></div></div><div class="fcrd" id="fc-pacifico" onclick="setFont('pacifico')"><div class="fcrdname">Pacifico</div><div class="fcrdprev" style="font-family:'Pacifico',cursive">ÉtuConnect<br><span style="font-family:'Nunito',sans-serif;font-size:12px;opacity:.6">Joyeux</span></div></div></div></div>
       <div class="ssec"><div class="slabel" id="slbl-sz"></div><div class="card" style="padding:16px 18px"><div class="szrow"><span style="font-size:11px;color:rgba(255,255,255,.4)">A</span><input type="range" id="szslider" min="12" max="20" value="14" oninput="setFontSize(this.value)"><span style="font-size:17px;color:rgba(255,255,255,.4)">A</span></div><div id="szprev" style="font-size:14px;margin-top:12px;color:rgba(255,255,255,.6)"></div></div></div>
-      <div class="ssec"><div class="slabel" id="slbl-lg"></div><div class="langgrd"><button class="langbtn selected" id="lang-fr" onclick="setLang('fr')">🇫🇷 Français</button><button class="langbtn" id="lang-en" onclick="setLang('en')">🇺🇸 English</button><button class="langbtn" id="lang-es" onclick="setLang('es')">🇪🇸 Español</button></div></div>
+      <div class="ssec"><div class="slabel" id="slbl-lg"></div><div class="langgrd"><button class="langbtn selected" id="lang-fr" onclick="setLang('fr')">🇫🇷 Français</button><button class="langbtn" id="lang-en" onclick="setLang('en')">🇺🇸 English</button><button class="langbtn" id="lang-es" onclick="setLang('es')">🇪🇸 Español</button><button class="langbtn" id="lang-pt" onclick="setLang('pt')">🇵🇹 Português</button><button class="langbtn" id="lang-ar" onclick="setLang('ar')">🇸🇦 العربية</button></div></div>
       <div class="ssec"><div class="slabel" id="slbl-priv"></div><div class="priv-row"><div><div style="font-size:14px" id="priv-lbl"></div><div style="color:rgba(255,255,255,.4);font-size:12px;margin-top:2px" id="priv-desc"></div></div><label class="toggle-sw"><input type="checkbox" id="priv-toggle" onchange="togglePrivacy()"><span class="toggle-sl"></span></label></div></div>
       <div class="ssec" id="adminlink" style="display:none"><div class="slabel">ADMINISTRATION</div><button onclick="goTab('admin')" style="width:100%;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);border-radius:12px;padding:13px;color:#ffd700;font-size:14px;cursor:pointer;font-family:var(--fb)" id="btn-adm"></button></div>
-      <div class="ssec"><div class="slabel" id="slbl-acc"></div><button onclick="showResetPwd()" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:13px;color:#fff;font-size:14px;cursor:pointer;font-family:var(--fb);margin-bottom:8px" id="btn-rpwd"></button><button onclick="logout()" style="width:100%;background:rgba(233,30,140,.08);border:1px solid rgba(233,30,140,.25);border-radius:12px;padding:13px;color:var(--acc);font-size:14px;cursor:pointer;font-family:var(--fb)" id="btn-logout"></button></div>
+      <div class="ssec"><div class="slabel" id="slbl-acc"></div><button onclick="showChangePwd()" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:13px;color:#fff;font-size:14px;cursor:pointer;font-family:var(--fb);margin-bottom:8px" id="btn-rpwd"></button><button onclick="logout()" style="width:100%;background:rgba(233,30,140,.08);border:1px solid rgba(233,30,140,.25);border-radius:12px;padding:13px;color:var(--acc);font-size:14px;cursor:pointer;font-family:var(--fb)" id="btn-logout"></button></div>
     </div>
   </div>
 
@@ -575,17 +610,51 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
 <div id="moverlay" onclick="closeMod()"><div class="msheet" onclick="event.stopPropagation()"><div class="mtitle" id="mtitle"></div><div id="mbody"></div></div></div>
 </div>
 <script>
+// ── PASSWORD TOGGLE ───────────────────────────────────
+function togglePwd(inputId, btn){
+  const inp = document.getElementById(inputId);
+  if(!inp) return;
+  if(inp.type === "password"){
+    inp.type = "text";
+    btn.textContent = "🙈";
+  } else {
+    inp.type = "password";
+    btn.textContent = "👁️";
+  }
+}
+
 // ── PWA INSTALL ───────────────────────────────────────
 let deferredPrompt = null;
 window.addEventListener("beforeinstallprompt", e => {
   e.preventDefault();
   deferredPrompt = e;
+  // Show install button in splash
+  const installBtn = document.getElementById("sbtn-install");
+  if(installBtn) installBtn.style.display = "block";
   // Show install banner after 3 seconds
   setTimeout(() => {
     const banner = document.getElementById("pwa-banner");
     if(banner) banner.style.display = "flex";
   }, 3000);
 });
+
+async function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    const{outcome} = await deferredPrompt.userChoice;
+    if(outcome === "accepted"){
+      const installBtn = document.getElementById("sbtn-install");
+      if(installBtn) installBtn.style.display = "none";
+      const banner = document.getElementById("pwa-banner");
+      if(banner) banner.style.display = "none";
+    }
+    deferredPrompt = null;
+  } else {
+    // iOS fallback
+    const banner = document.getElementById("ios-banner");
+    if(banner) banner.style.display = "block";
+  }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.getElementById("pwa-install-btn");
@@ -605,8 +674,35 @@ document.addEventListener("DOMContentLoaded", () => {
 window.addEventListener("appinstalled", () => {
   const banner = document.getElementById("pwa-banner");
   if(banner) banner.style.display = "none";
+  const installBtn = document.getElementById("sbtn-install");
+  if(installBtn) installBtn.style.display = "none";
   deferredPrompt = null;
 });
+
+// iOS detection - show iOS install instructions
+(function(){
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInStandaloneMode = window.navigator.standalone === true;
+  const isDismissed = localStorage.getItem("ios_banner_dismissed");
+  
+  if(isIOS && !isInStandaloneMode && !isDismissed){
+    // Show download button on iOS too
+    const installBtn = document.getElementById("sbtn-install");
+    if(installBtn) installBtn.style.display = "block";
+    setTimeout(()=>{
+      const banner = document.getElementById("ios-banner");
+      if(banner) banner.style.display = "block";
+    }, 4000);
+    
+    // Save dismissal
+    const closeBtn = document.querySelector("#ios-banner button");
+    if(closeBtn){
+      closeBtn.addEventListener("click", ()=>{
+        localStorage.setItem("ios_banner_dismissed", "1");
+      });
+    }
+  }
+})();
 
 // ── SUPABASE ──────────────────────────────────────────
 const SUPA_URL = "https://egswphldeftgtmgpyfek.supabase.co";
@@ -619,7 +715,9 @@ let currentProfile = null;
 const T={
 fr:{slogan:"Rencontre, partage, réussite collective",createAcc:"Créer un compte",connect:"Se connecter",login:"Connexion",register:"Inscription",loginHint:"Email",email:"Email",tel:"Téléphone",pwd:"MOT DE PASSE",doLogin:"Se connecter",noAcc:"Pas de compte ? S'inscrire",step1:"Étape 1/2 — Infos du compte",step2:"Étape 2/2 — Profil scolaire",fullname:"NOM COMPLET",username:"NOM D'UTILISATEUR",ident:"IDENTIFIANT",conf:"🔒 Confidentiel",pwdReg:"MOT DE PASSE",cont:"Continuer →",hasAcc:"Déjà un compte ? Se connecter",age:"ÂGE",level:"NIVEAU",school:"ÉTABLISSEMENT",bio:"BIO",createP:"Créer mon profil 🎉",back:"← Retour",backHome:"← Accueil",publish:"Publier",rmPhoto:"✕ Supprimer",discover:"Découvrir",search:"Rechercher…",filterAll:"Tous",filterFoF:"Amis d'amis",filterSchool:"Même école",filterLevel:"Même niveau",filterInterests:"🎯 Centres d'intérêt",matchScore:"% compatible",commonTalents:"Talent en commun",sameLevel:"Même niveau",sameAge:"Âge proche",suggestTitle:"Suggestions pour toi",friends:"Amis",myFriends:"Mes ami·e·s",requests:"Demandes",messages:"Messages",typeMsg:"Écris un message…",online:"● En ligne",profile:"Profil",edit:"✏️ Modifier",photos:"Photos",posts:"Publications",talents:"🌟 Talents",save:"Sauvegarder",cancel:"Annuler",noPhoto:"Aucune photo.",noPost:"Aucune publication.",photoPH:"Emoji ou image",notifs:"Notifications",clearNf:"Tout lire",noNf:"Aucune notification.",settings:"Paramètres",themeC:"THÈME",fontF:"POLICE",fontSize:"TAILLE",lang:"LANGUE",account:"COMPTE",logout:"🚪 Déconnexion",resetPwd:"🔑 Changer le mot de passe",backFeed:"Retour",p2:"publication",p2p:"publications",admin:"Administration",adU:"Utilisateurs",adP:"Publications",adR:"Signalements",adUL:"UTILISATEURS",ban:"🚫 Bannir",report:"Signaler",blockU:"Bloquer",edit2:"✏️ Modifier",edited:"modifié",pin:"📌 Épingler",unpin:"📌 Désépingler",del:"🗑️ Supprimer",share:"📤 Partager",rptSent:"Signalement envoyé.",blockedMsg:"Utilisateur bloqué.",rptOpts:["Contenu inapproprié","Harcèlement","Faux profil","Spam","Autre"],addComment:"Ajouter un commentaire…",errName:"Entre ton nom.",errUN:"Pseudo invalide (3-20 car.).",errEmail:"Email invalide.",errTel:"Numéro trop court.",errPwd:"Min. 6 caractères.",errEmailUsed:"Email déjà utilisé.",errTelUsed:"Numéro déjà utilisé.",errUNUsed:"Pseudo déjà pris.",errNoAcc:"Compte introuvable.",errWrong:"Mot de passe incorrect.",errAge:"Indique ton âge.",errLevel:"Choisis ton niveau.",errSchool:"Choisis ton établissement.",nfReq:"{n} t'a envoyé une demande.",nfAcc:"{n} a accepté ta demande.",nfLike:"{n} a aimé ta publication.",nfCmt:"{n} a commenté.",themes:{violet:"Violet",ocean:"Océan",forest:"Forêt",sunset:"Coucher"},adPanel:"Admin",szPrev:"Aperçu du texte",privacy:"CONFIDENTIALITÉ",privPublic:"Profil public",privPublicD:"Tout le monde peut voir",privPrivate:"Profil privé",privPrivateD:"Seuls tes amis voient",groups:"Clubs",newGrp:"Nouveau club",groupName:"NOM DU CLUB",groupDesc:"DESCRIPTION",groupPhoto:"PHOTO (optionnel)",createGrp:"Créer le club",invite:"Inviter",invites:"Invitations reçues",accept:"Accepter",refuse:"Refuser",blockGrp:"Bloquer",reportGrp:"Signaler",leaveGrp:"Quitter le groupe",deleteGrp:"Supprimer le groupe",removeMember:"Retirer du groupe",members:"Membres",noGroups:"Aucun club pour l'instant.",story:"Story",addStory:"Ajouter une story",moodLabel:"Humeur",locLabel:"Lieu",storyText:"Écris quelque chose…",moods:[{e:"😊",l:"Heureux·se"},{e:"😔",l:"Triste"},{e:"😤",l:"Énervé·e"},{e:"🥰",l:"Amoureux·se"},{e:"😂",l:"Mort de rire"},{e:"🤔",l:"Pensif·ve"},{e:"😴",l:"Fatigué·e"},{e:"🔥",l:"Motivé·e"},{e:"😰",l:"Stressé·e"},{e:"🥳",l:"En fête"}],nfGrpInvite:"{a} t'a invité dans le club {g}.",nfGrpAccept:"{n} a rejoint le club {g}.",trends:"Tendances",schoolMap:"Carte des écoles",mapSub:"Élèves par école",nl:{home:"Accueil",disc:"Explorer",fr:"Amis",msg:"Messages",grp:"Clubs",set:"Réglages"},resetTitle:"Changer le mot de passe",resetNew:"NOUVEAU MDP",resetConf:"CONFIRMER",resetSave:"Sauvegarder",resetOK:"Mot de passe modifié.",resetErr:"Les mots de passe ne correspondent pas.",sendReq:"Ami",sent:"Envoyé"},
 en:{slogan:"Meet, share, succeed together",createAcc:"Create account",connect:"Sign in",login:"Sign in",register:"Sign up",loginHint:"Email",email:"Email",tel:"Phone",pwd:"PASSWORD",doLogin:"Sign in",noAcc:"No account? Sign up",step1:"Step 1/2 — Account",step2:"Step 2/2 — Profile",fullname:"FULL NAME",username:"USERNAME",ident:"LOGIN",conf:"🔒 Private",pwdReg:"PASSWORD",cont:"Continue →",hasAcc:"Have account? Sign in",age:"AGE",level:"LEVEL",school:"SCHOOL",bio:"BIO",createP:"Create profile 🎉",back:"← Back",backHome:"← Home",publish:"Post",rmPhoto:"✕ Remove",discover:"Discover",search:"Search…",filterAll:"All",filterFoF:"Friends of friends",filterSchool:"Same school",filterLevel:"Same level",filterInterests:"🎯 Interests",matchScore:"% match",commonTalents:"Common talent",sameLevel:"Same level",sameAge:"Similar age",suggestTitle:"Suggested for you",friends:"Friends",myFriends:"My friends",requests:"Requests",messages:"Messages",typeMsg:"Write a message…",online:"● Online",profile:"Profile",edit:"✏️ Edit",photos:"Photos",posts:"Posts",talents:"🌟 Talents",save:"Save",cancel:"Cancel",noPhoto:"No photos.",noPost:"No posts.",photoPH:"Emoji or image",notifs:"Notifications",clearNf:"Mark read",noNf:"No notifications.",settings:"Settings",themeC:"THEME",fontF:"FONT",fontSize:"SIZE",lang:"LANGUAGE",account:"ACCOUNT",logout:"🚪 Sign out",resetPwd:"🔑 Change password",backFeed:"Back",p2:"post",p2p:"posts",admin:"Admin",adU:"Users",adP:"Posts",adR:"Reports",adUL:"USERS",ban:"🚫 Ban",report:"Report",blockU:"Block",edit2:"✏️ Edit",edited:"edited",pin:"📌 Pin",unpin:"📌 Unpin",del:"🗑️ Delete",share:"📤 Share",rptSent:"Report sent.",blockedMsg:"User blocked.",rptOpts:["Inappropriate","Harassment","Fake profile","Spam","Other"],addComment:"Add a comment…",errName:"Enter your name.",errUN:"Invalid username.",errEmail:"Invalid email.",errTel:"Number too short.",errPwd:"Min. 6 characters.",errEmailUsed:"Email taken.",errTelUsed:"Phone taken.",errUNUsed:"Username taken.",errNoAcc:"Account not found.",errWrong:"Wrong password.",errAge:"Enter your age.",errLevel:"Choose level.",errSchool:"Choose school.",nfReq:"{n} sent a friend request.",nfAcc:"{n} accepted your request.",nfLike:"{n} liked your post.",nfCmt:"{n} commented.",themes:{violet:"Violet",ocean:"Ocean",forest:"Forest",sunset:"Sunset"},adPanel:"Admin",szPrev:"Text preview",privacy:"PRIVACY",privPublic:"Public profile",privPublicD:"Everyone can see",privPrivate:"Private profile",privPrivateD:"Only friends see",groups:"Clubs",newGrp:"New club",groupName:"CLUB NAME",groupDesc:"DESCRIPTION",groupPhoto:"PHOTO (optional)",createGrp:"Create club",invite:"Invite",invites:"Invitations",accept:"Accept",refuse:"Decline",blockGrp:"Block",reportGrp:"Report",leaveGrp:"Leave group",deleteGrp:"Delete group",removeMember:"Remove member",members:"Members",noGroups:"No clubs yet.",story:"Story",addStory:"Add a story",moodLabel:"Mood",locLabel:"Location",storyText:"Write something…",moods:[{e:"😊",l:"Happy"},{e:"😔",l:"Sad"},{e:"😤",l:"Angry"},{e:"🥰",l:"In love"},{e:"😂",l:"Laughing"},{e:"🤔",l:"Thoughtful"},{e:"😴",l:"Tired"},{e:"🔥",l:"Motivated"},{e:"😰",l:"Stressed"},{e:"🥳",l:"Partying"}],nfGrpInvite:"{a} invited you to the club {g}.",nfGrpAccept:"{n} joined the club {g}.",trends:"Trending",schoolMap:"School map",mapSub:"Students by school",nl:{home:"Home",disc:"Explore",fr:"Friends",msg:"Messages",grp:"Clubs",set:"Settings"},resetTitle:"Change password",resetNew:"NEW PASSWORD",resetConf:"CONFIRM",resetSave:"Save",resetOK:"Password changed.",resetErr:"Passwords don't match.",sendReq:"Friend",sent:"Sent"},
-es:{slogan:"Conecta, comparte, triunfa juntos",createAcc:"Crear cuenta",connect:"Iniciar sesión",login:"Iniciar sesión",register:"Registrarse",loginHint:"Email",email:"Email",tel:"Teléfono",pwd:"CONTRASEÑA",doLogin:"Iniciar sesión",noAcc:"¿Sin cuenta? Regístrate",step1:"Paso 1/2 — Cuenta",step2:"Paso 2/2 — Perfil",fullname:"NOMBRE",username:"USUARIO",ident:"ACCESO",conf:"🔒 Privado",pwdReg:"CONTRASEÑA",cont:"Continuar →",hasAcc:"¿Cuenta? Inicia sesión",age:"EDAD",level:"NIVEL",school:"INSTITUCIÓN",bio:"BIO",createP:"Crear perfil 🎉",back:"← Atrás",backHome:"← Inicio",publish:"Publicar",rmPhoto:"✕ Quitar",discover:"Explorar",search:"Buscar…",filterAll:"Todos",filterFoF:"Amigos de amigos",filterSchool:"Misma escuela",filterLevel:"Mismo nivel",filterInterests:"🎯 Intereses",matchScore:"% compatible",commonTalents:"Talento en común",sameLevel:"Mismo nivel",sameAge:"Edad similar",suggestTitle:"Sugerencias para ti",friends:"Amigos",myFriends:"Mis amigos",requests:"Solicitudes",messages:"Mensajes",typeMsg:"Escribe…",online:"● En línea",profile:"Perfil",edit:"✏️ Editar",photos:"Fotos",posts:"Publicaciones",talents:"🌟 Talentos",save:"Guardar",cancel:"Cancelar",noPhoto:"Sin fotos.",noPost:"Sin publicaciones.",photoPH:"Emoji o imagen",notifs:"Notificaciones",clearNf:"Marcar leído",noNf:"Sin notificaciones.",settings:"Ajustes",themeC:"TEMA",fontF:"FUENTE",fontSize:"TAMAÑO",lang:"IDIOMA",account:"CUENTA",logout:"🚪 Salir",resetPwd:"🔑 Cambiar contraseña",backFeed:"Volver",p2:"publicación",p2p:"publicaciones",admin:"Admin",adU:"Usuarios",adP:"Publicaciones",adR:"Reportes",adUL:"USUARIOS",ban:"🚫 Banear",report:"Reportar",blockU:"Bloquear",edit2:"✏️ Editar",edited:"editado",pin:"📌 Fijar",unpin:"📌 Desfijar",del:"🗑️ Eliminar",share:"📤 Compartir",rptSent:"Reporte enviado.",blockedMsg:"Usuario bloqueado.",rptOpts:["Inapropiado","Acoso","Perfil falso","Spam","Otro"],addComment:"Agregar comentario…",errName:"Ingresa tu nombre.",errUN:"Usuario inválido.",errEmail:"Email inválido.",errTel:"Número corto.",errPwd:"Mín. 6 caracteres.",errEmailUsed:"Email en uso.",errTelUsed:"Teléfono en uso.",errUNUsed:"Usuario tomado.",errNoAcc:"Cuenta no encontrada.",errWrong:"Contraseña incorrecta.",errAge:"Ingresa tu edad.",errLevel:"Elige nivel.",errSchool:"Elige institución.",nfReq:"{n} te envió solicitud.",nfAcc:"{n} aceptó tu solicitud.",nfLike:"{n} le gustó tu publicación.",nfCmt:"{n} comentó.",themes:{violet:"Violeta",ocean:"Océano",forest:"Bosque",sunset:"Atardecer"},adPanel:"Admin",szPrev:"Vista previa",privacy:"PRIVACIDAD",privPublic:"Perfil público",privPublicD:"Todos pueden ver",privPrivate:"Perfil privado",privPrivateD:"Solo amigos ven",groups:"Clubs",newGrp:"Nuevo club",groupName:"NOMBRE DEL CLUB",groupDesc:"DESCRIPCIÓN",groupPhoto:"FOTO (opcional)",createGrp:"Crear club",invite:"Invitar",invites:"Invitaciones",accept:"Aceptar",refuse:"Rechazar",blockGrp:"Bloquear",reportGrp:"Reportar",leaveGrp:"Salir del grupo",deleteGrp:"Eliminar grupo",removeMember:"Eliminar miembro",members:"Miembros",noGroups:"Sin clubs aún.",story:"Story",addStory:"Agregar historia",moodLabel:"Estado",locLabel:"Lugar",storyText:"Escribe algo…",moods:[{e:"😊",l:"Feliz"},{e:"😔",l:"Triste"},{e:"😤",l:"Enojado/a"},{e:"🥰",l:"Enamorado/a"},{e:"😂",l:"Riendo"},{e:"🤔",l:"Pensativo/a"},{e:"😴",l:"Cansado/a"},{e:"🔥",l:"Motivado/a"},{e:"😰",l:"Estresado/a"},{e:"🥳",l:"De fiesta"}],nfGrpInvite:"{a} te invitó al club {g}.",nfGrpAccept:"{n} se unió al club {g}.",trends:"Tendencias",schoolMap:"Mapa escolar",mapSub:"Alumnos por escuela",nl:{home:"Inicio",disc:"Explorar",fr:"Amigos",msg:"Mensajes",grp:"Clubs",set:"Ajustes"},resetTitle:"Cambiar contraseña",resetNew:"NUEVA CONTRASEÑA",resetConf:"CONFIRMAR",resetSave:"Guardar",resetOK:"Contraseña cambiada.",resetErr:"Las contraseñas no coinciden.",sendReq:"Amigo",sent:"Enviado"}
+es:{slogan:"Conecta, comparte, triunfa juntos",createAcc:"Crear cuenta",connect:"Iniciar sesión",login:"Iniciar sesión",register:"Registrarse",loginHint:"Email",email:"Email",tel:"Teléfono",pwd:"CONTRASEÑA",doLogin:"Iniciar sesión",noAcc:"¿Sin cuenta? Regístrate",step1:"Paso 1/2 — Cuenta",step2:"Paso 2/2 — Perfil",fullname:"NOMBRE",username:"USUARIO",ident:"ACCESO",conf:"🔒 Privado",pwdReg:"CONTRASEÑA",cont:"Continuar →",hasAcc:"¿Cuenta? Inicia sesión",age:"EDAD",level:"NIVEL",school:"INSTITUCIÓN",bio:"BIO",createP:"Crear perfil 🎉",back:"← Atrás",backHome:"← Inicio",publish:"Publicar",rmPhoto:"✕ Quitar",discover:"Explorar",search:"Buscar…",filterAll:"Todos",filterFoF:"Amigos de amigos",filterSchool:"Misma escuela",filterLevel:"Mismo nivel",filterInterests:"🎯 Intereses",matchScore:"% compatible",commonTalents:"Talento en común",sameLevel:"Mismo nivel",sameAge:"Edad similar",suggestTitle:"Sugerencias para ti",friends:"Amigos",myFriends:"Mis amigos",requests:"Solicitudes",messages:"Mensajes",typeMsg:"Escribe…",online:"● En línea",profile:"Perfil",edit:"✏️ Editar",photos:"Fotos",posts:"Publicaciones",talents:"🌟 Talentos",save:"Guardar",cancel:"Cancelar",noPhoto:"Sin fotos.",noPost:"Sin publicaciones.",photoPH:"Emoji o imagen",notifs:"Notificaciones",clearNf:"Marcar leído",noNf:"Sin notificaciones.",settings:"Ajustes",themeC:"TEMA",fontF:"FUENTE",fontSize:"TAMAÑO",lang:"IDIOMA",account:"CUENTA",logout:"🚪 Salir",resetPwd:"🔑 Cambiar contraseña",backFeed:"Volver",p2:"publicación",p2p:"publicaciones",admin:"Admin",adU:"Usuarios",adP:"Publicaciones",adR:"Reportes",adUL:"USUARIOS",ban:"🚫 Banear",report:"Reportar",blockU:"Bloquear",edit2:"✏️ Editar",edited:"editado",pin:"📌 Fijar",unpin:"📌 Desfijar",del:"🗑️ Eliminar",share:"📤 Compartir",rptSent:"Reporte enviado.",blockedMsg:"Usuario bloqueado.",rptOpts:["Inapropiado","Acoso","Perfil falso","Spam","Otro"],addComment:"Agregar comentario…",errName:"Ingresa tu nombre.",errUN:"Usuario inválido.",errEmail:"Email inválido.",errTel:"Número corto.",errPwd:"Mín. 6 caracteres.",errEmailUsed:"Email en uso.",errTelUsed:"Teléfono en uso.",errUNUsed:"Usuario tomado.",errNoAcc:"Cuenta no encontrada.",errWrong:"Contraseña incorrecta.",errAge:"Ingresa tu edad.",errLevel:"Elige nivel.",errSchool:"Elige institución.",nfReq:"{n} te envió solicitud.",nfAcc:"{n} aceptó tu solicitud.",nfLike:"{n} le gustó tu publicación.",nfCmt:"{n} comentó.",themes:{violet:"Violeta",ocean:"Océano",forest:"Bosque",sunset:"Atardecer"},adPanel:"Admin",szPrev:"Vista previa",privacy:"PRIVACIDAD",privPublic:"Perfil público",privPublicD:"Todos pueden ver",privPrivate:"Perfil privado",privPrivateD:"Solo amigos ven",groups:"Clubs",newGrp:"Nuevo club",groupName:"NOMBRE DEL CLUB",groupDesc:"DESCRIPCIÓN",groupPhoto:"FOTO (opcional)",createGrp:"Crear club",invite:"Invitar",invites:"Invitaciones",accept:"Aceptar",refuse:"Rechazar",blockGrp:"Bloquear",reportGrp:"Reportar",leaveGrp:"Salir del grupo",deleteGrp:"Eliminar grupo",removeMember:"Eliminar miembro",members:"Miembros",noGroups:"Sin clubs aún.",story:"Story",addStory:"Agregar historia",moodLabel:"Estado",locLabel:"Lugar",storyText:"Escribe algo…",moods:[{e:"😊",l:"Feliz"},{e:"😔",l:"Triste"},{e:"😤",l:"Enojado/a"},{e:"🥰",l:"Enamorado/a"},{e:"😂",l:"Riendo"},{e:"🤔",l:"Pensativo/a"},{e:"😴",l:"Cansado/a"},{e:"🔥",l:"Motivado/a"},{e:"😰",l:"Estresado/a"},{e:"🥳",l:"De fiesta"}],nfGrpInvite:"{a} te invitó al club {g}.",nfGrpAccept:"{n} se unió al club {g}.",trends:"Tendencias",schoolMap:"Mapa escolar",mapSub:"Alumnos por escuela",nl:{home:"Inicio",disc:"Explorar",fr:"Amigos",msg:"Mensajes",grp:"Clubs",set:"Ajustes"},resetTitle:"Cambiar contraseña",resetNew:"NUEVA CONTRASEÑA",resetConf:"CONFIRMAR",resetSave:"Guardar",resetOK:"Contraseña cambiada.",resetErr:"Las contraseñas no coinciden.",sendReq:"Amigo",sent:"Enviado"},
+pt:{slogan:"Conecta, partilha, triunfa juntos",createAcc:"Criar conta",connect:"Entrar",login:"Entrar",register:"Registar",loginHint:"Email",email:"Email",tel:"Telefone",pwd:"SENHA",doLogin:"Entrar",noAcc:"Sem conta? Registar",step1:"Passo 1/2 — Conta",step2:"Passo 2/2 — Perfil",fullname:"NOME COMPLETO",username:"UTILIZADOR",ident:"ACESSO",conf:"🔒 Privado",pwdReg:"SENHA",cont:"Continuar →",hasAcc:"Tens conta? Entrar",age:"IDADE",level:"NÍVEL",school:"ESCOLA",bio:"BIO",createP:"Criar perfil 🎉",back:"← Voltar",backHome:"← Início",publish:"Publicar",rmPhoto:"✕ Remover",discover:"Descobrir",search:"Pesquisar…",filterAll:"Todos",filterFoF:"Amigos de amigos",filterSchool:"Mesma escola",filterLevel:"Mesmo nível",filterInterests:"🎯 Interesses",friends:"Amigos",myFriends:"Os meus amigos",requests:"Pedidos",messages:"Mensagens",typeMsg:"Escreve uma mensagem…",profile:"Perfil",edit:"✏️ Editar",photos:"Fotos",posts:"Publicações",talents:"🌟 Talentos",save:"Guardar",cancel:"Cancelar",notifs:"Notificações",noNf:"Sem notificações.",settings:"Definições",logout:"🚪 Sair",report:"Denunciar",share:"📤 Partilhar",rptSent:"Denúncia enviada.",errName:"Introduz o teu nome.",errUN:"Utilizador inválido.",errEmail:"Email inválido.",errPwd:"Mín. 6 caracteres.",errAge:"Introduz a tua idade.",errLevel:"Escolhe o nível.",errSchool:"Escolhe a escola.",sendReq:"Amigo",sent:"Enviado",groups:"Clubes",noGroups:"Sem clubes.",story:"Story",addStory:"Adicionar story",cancel:"Cancelar",nl:{home:"Início",disc:"Explorar",fr:"Amigos",msg:"Mensagens",grp:"Clubes",set:"Definições"},resetTitle:"Alterar senha",resetNew:"NOVA SENHA",resetConf:"CONFIRMAR",resetSave:"Guardar",resetOK:"Senha alterada.",resetErr:"As senhas não coincidem.",themes:{violet:"Violeta",ocean:"Oceano",forest:"Floresta",sunset:"Pôr do sol"},rptOpts:["Inapropriado","Assédio","Perfil falso","Spam","Outro"],moods:[{e:"😊",l:"Feliz"},{e:"😔",l:"Triste"},{e:"😤",l:"Irritado/a"},{e:"🥰",l:"Apaixonado/a"},{e:"😂",l:"A rir"},{e:"🤔",l:"Pensativo/a"},{e:"😴",l:"Cansado/a"},{e:"🔥",l:"Motivado/a"},{e:"😰",l:"Stressado/a"},{e:"🥳",l:"Em festa"}],addComment:"Adicionar comentário…",privacy:"PRIVACIDADE",privPublic:"Perfil público",privPrivate:"Perfil privado",noGroups:"Sem clubes ainda.",errLevel:"Escolhe o nível.",errSchool:"Escolhe a escola."},
+ar:{slogan:"تواصل، شارك، انجح معاً",createAcc:"إنشاء حساب",connect:"تسجيل الدخول",login:"تسجيل الدخول",register:"التسجيل",loginHint:"البريد الإلكتروني",email:"البريد الإلكتروني",tel:"الهاتف",pwd:"كلمة المرور",doLogin:"تسجيل الدخول",noAcc:"ليس لديك حساب؟ سجّل",step1:"الخطوة 1/2 — الحساب",step2:"الخطوة 2/2 — الملف الشخصي",fullname:"الاسم الكامل",username:"اسم المستخدم",ident:"الدخول",conf:"🔒 سري",pwdReg:"كلمة المرور",cont:"متابعة ←",hasAcc:"لديك حساب؟ سجّل الدخول",age:"العمر",level:"المستوى",school:"المدرسة",bio:"نبذة",createP:"إنشاء الملف 🎉",back:"← رجوع",backHome:"← الرئيسية",publish:"نشر",discover:"اكتشف",search:"بحث…",filterAll:"الكل",friends:"الأصدقاء",myFriends:"أصدقائي",requests:"الطلبات",messages:"الرسائل",typeMsg:"اكتب رسالة…",profile:"الملف الشخصي",edit:"✏️ تعديل",save:"حفظ",cancel:"إلغاء",notifs:"الإشعارات",noNf:"لا توجد إشعارات.",settings:"الإعدادات",logout:"🚪 خروج",share:"📤 مشاركة",rptSent:"تم الإبلاغ.",errName:"أدخل اسمك.",errUN:"اسم مستخدم غير صالح.",errEmail:"بريد إلكتروني غير صالح.",errPwd:"6 أحرف على الأقل.",errAge:"أدخل عمرك.",errLevel:"اختر المستوى.",errSchool:"اختر المدرسة.",sendReq:"صديق",sent:"تم الإرسال",groups:"النوادي",noGroups:"لا توجد نوادٍ.",story:"قصة",addStory:"إضافة قصة",nl:{home:"الرئيسية",disc:"اكتشف",fr:"الأصدقاء",msg:"الرسائل",grp:"النوادي",set:"الإعدادات"},resetTitle:"تغيير كلمة المرور",resetNew:"كلمة المرور الجديدة",resetConf:"تأكيد",resetSave:"حفظ",resetOK:"تم تغيير كلمة المرور.",resetErr:"كلمات المرور غير متطابقة.",themes:{violet:"بنفسجي",ocean:"محيط",forest:"غابة",sunset:"غروب"},rptOpts:["محتوى غير لائق","مضايقة","ملف مزيف","بريد مزعج","أخرى"],moods:[{e:"😊",l:"سعيد"},{e:"😔",l:"حزين"},{e:"😤",l:"غاضب"},{e:"🥰",l:"عاشق"},{e:"😂",l:"يضحك"},{e:"🤔",l:"مفكر"},{e:"😴",l:"متعب"},{e:"🔥",l:"متحمس"},{e:"😰",l:"قلق"},{e:"🥳",l:"مبتهج"}],addComment:"أضف تعليقاً…",privacy:"الخصوصية",privPublic:"ملف عام",privPrivate:"ملف خاص"},
 };
 let lang=localStorage.getItem("ec_lang")||"fr";
 const ii=(k)=>(T[lang]||T.fr)[k]||(T.fr[k])||k;
@@ -676,8 +774,8 @@ const RCOLS={like:"#ff4d7a",fire:"#ff7a1a",laugh:"#f7c948",wow:"#38b2f7"};
 
 const FAKE=[];
 
-let ME={id:0,nom:"",age:0,niveau:"",etablissement:"",pays:"",ville:"",bio:"",avatar:"",couleur:"#e91e8c",profilePic:null,coverPic:null,photos:[],posts:[],amis:[],demandesEnvoyees:[],demandesRecues:[],talents:[],autretalent:"",blocked:[],isAdmin:false,isPrivate:false,username:""};
-let convos={};
+let ME={id:0,nom:"",age:0,niveau:"",etablissement:"",pays:"",ville:"",bio:"",avatar:"",couleur:"#e91e8c",profilePic:null,coverPic:null,talents:[],autretalent:"",blocked:[],isAdmin:false,isPrivate:false,username:""};
+const convos={};// Legacy - messages now in Supabase
 let activeChat=null,currentTab="home",notifs=[],reports=[],pendingImg=null,dFilter="all";
 
 // ── UTILS ─────────────────────────────────────────────
@@ -753,6 +851,45 @@ function splashAnim(){
 }
 
 // ── AUTH NAV ──────────────────────────────────────────
+async function showForgotPwd(){
+  openMod("🔑 Mot de passe oublié", `
+    <p style="color:rgba(255,255,255,.5);font-size:13px;margin-bottom:14px">Entre ton email — on t'envoie un lien pour réinitialiser ton mot de passe.</p>
+    <div style="margin-bottom:14px">
+      <label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">EMAIL</label>
+      <input id="reset-email" type="email" placeholder="ton@email.com" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none">
+    </div>
+    <div id="reset-msg" style="display:none;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:10px;padding:10px 12px;color:#2ecc71;font-size:13px;margin-bottom:10px"></div>
+    <button class="mbtn" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;color:#fff;font-family:var(--fh);font-weight:700" onclick="sendResetEmail()">Envoyer le lien</button>
+    <button class="mbtn cancel" onclick="closeMod()">Annuler</button>
+  `);
+}
+
+async function sendResetEmail(){
+  const email = document.getElementById("reset-email").value.trim().toLowerCase();
+  if(!email){alert("Entre ton email.");return;}
+  const btn = document.querySelector("#modal-content .mbtn");
+  btn.textContent = "..."; btn.disabled = true;
+  try{
+    const{error} = await supa.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://stefimerv.github.io/EtuConnect-/"
+    });
+    const msgEl = document.getElementById("reset-msg");
+    if(error){
+      msgEl.style.background = "rgba(231,76,60,.1)";
+      msgEl.style.borderColor = "rgba(231,76,60,.3)";
+      msgEl.style.color = "#e74c3c";
+      msgEl.textContent = error.message;
+    } else {
+      msgEl.textContent = "✅ Lien envoyé ! Vérifie ta boîte mail.";
+    }
+    msgEl.style.display = "block";
+    btn.textContent = "Envoyer le lien"; btn.disabled = false;
+  }catch(e){
+    alert(e.message);
+    btn.textContent = "Envoyer le lien"; btn.disabled = false;
+  }
+}
+
 function showAuth(tab){document.getElementById("splash").style.display="none";document.getElementById("auth").classList.add("active");switchAuthTab(tab||"login");}
 function goBackSplash(){document.getElementById("auth").classList.remove("active");document.getElementById("splash").style.display="flex";}
 let liMode="email",riMode="email";
@@ -762,12 +899,8 @@ function switchAuthTab(tab){hideErr();["atab-l","atab-r"].forEach((id,i)=>docume
 function showRegStep(n){hideErr();document.getElementById("rform1").style.display=n===1?"block":"none";document.getElementById("rform2").style.display=n===2?"block":"none";}
 
 // ── AUTH LOGIC ────────────────────────────────────────
-const gA=()=>{try{return JSON.parse(localStorage.getItem("ec_acc")||"{}");}catch(e){return{};}};
-const sA=(a)=>localStorage.setItem("ec_acc",JSON.stringify(a));
-const gS=()=>{try{return JSON.parse(localStorage.getItem("ec_sess")||"null");}catch(e){return null;}};
-const svS=(p)=>localStorage.setItem("ec_sess",JSON.stringify(p));
-const clS=()=>localStorage.removeItem("ec_sess");
-const h=(s)=>{let x=0;for(let i=0;i<s.length;i++){x=((x<<5)-x)+s.charCodeAt(i);x|=0;}return x.toString(36);};
+// removed legacy function
+// removed legacy function
 const normId=()=>riMode==="email"?document.getElementById("r-email").value.trim().toLowerCase():document.getElementById("r-ind").value+document.getElementById("r-tel").value.trim().replace(/\s/g,"");
 const normLId=()=>liMode==="email"?document.getElementById("l-email").value.trim().toLowerCase():document.getElementById("l-ind").value+document.getElementById("l-tel").value.trim().replace(/\s/g,"");
 let regTmp={};
@@ -806,6 +939,10 @@ async function doRegister(){
   btn.textContent="...";btn.disabled=true;
   try{
     // 1. Create auth user
+    // Check if username already taken
+    const{data:existing}=await supa.from("profiles").select("id").eq("username",regTmp.username).single();
+    if(existing){showErr(ii("errUNUsed"));btn.textContent=ii("createP");btn.disabled=false;return;}
+    
     const {data,error}=await supa.auth.signUp({
       email:regTmp.id,
       password:regTmp.pwdHash_plain,
@@ -865,8 +1002,29 @@ async function doRegister(){
     }
   }catch(e){showErr(e.message);btn.textContent=ii("createP");btn.disabled=false;}
 }
-function doLogin(){
-  // Handled by async doLogin above
+async function doLogin(){
+  hideErr();
+  const email=document.getElementById("l-email").value.trim().toLowerCase();
+  const pwd=document.getElementById("l-pwd").value;
+  if(!email){showErr(ii("errEmail"));return;}
+  if(!pwd||pwd.length<6){showErr(ii("errPwd"));return;}
+  const btn=document.getElementById("btn-dologin");
+  btn.textContent="...";btn.disabled=true;
+  try{
+    const{data,error}=await supa.auth.signInWithPassword({email,password:pwd});
+    if(error){
+      showErr(error.message==="Invalid login credentials"?ii("errWrong"):error.message);
+      btn.textContent=ii("doLogin");btn.disabled=false;
+      return;
+    }
+    currentUser=data.user;
+    await loadProfile();
+    launchApp();
+  }catch(e){
+    showErr(e.message);
+    btn.textContent=ii("doLogin");
+    btn.disabled=false;
+  }
 }
 function launchApp(){
   document.getElementById("auth").classList.remove("active");
@@ -887,6 +1045,50 @@ function updTopbar(){
   else{npav.innerHTML=ME.avatar||"?";npav.style.background=ME.couleur||"#e91e8c";}
 }
 async function logout(){await supa.auth.signOut();}
+async function showChangePwd(){
+  openMod("🔑 " + ii("resetTitle"), `
+    <div style="margin-bottom:12px">
+      <label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("resetNew")}</label>
+      <div class="pwd-wrap"><input type="password" id="new-pwd" placeholder="••••••" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"><button class="pwd-toggle" type="button" onclick="togglePwd('new-pwd',this)">👁️</button></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("resetConf")}</label>
+      <div class="pwd-wrap"><input type="password" id="conf-pwd" placeholder="••••••" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"><button class="pwd-toggle" type="button" onclick="togglePwd('conf-pwd',this)">👁️</button></div>
+    </div>
+    <div id="pwd-msg" style="display:none;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px"></div>
+    <button class="mbtn" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;color:#fff;font-family:var(--fh);font-weight:700" onclick="doChangePwd()">${ii("resetSave")}</button>
+    <button class="mbtn cancel" onclick="closeMod()">${ii("cancel")}</button>
+  `);
+}
+
+async function doChangePwd(){
+  const np = document.getElementById("new-pwd").value;
+  const cp = document.getElementById("conf-pwd").value;
+  const msg = document.getElementById("pwd-msg");
+  if(np.length < 6){
+    msg.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";
+    msg.textContent=ii("errPwd"); return;
+  }
+  if(np !== cp){
+    msg.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";
+    msg.textContent=ii("resetErr"); return;
+  }
+  try{
+    const{error} = await supa.auth.updateUser({password: np});
+    if(error){
+      msg.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";
+      msg.textContent=error.message;
+    } else {
+      msg.style.cssText="display:block;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:#2ecc71";
+      msg.textContent=ii("resetOK");
+      setTimeout(closeMod, 2000);
+    }
+  }catch(e){
+    msg.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";
+    msg.textContent=e.message;
+  }
+}
+
 function showResetPwd(){openMod(ii("resetTitle"),`<div class="field" style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("resetNew")}</label><input type="password" id="rpwd1" placeholder="••••••••" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div><div class="field" style="margin-bottom:14px"><label style="color:rgba(255,255,255,.5);font-size:11px;display:block;margin-bottom:5px">${ii("resetConf")}</label><input type="password" id="rpwd2" placeholder="••••••••" style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none"></div><button class="mbtn" onclick="doResetPwd()">${ii("resetSave")}</button><button class="mbtn cancel" onclick="closeMod()">${ii("cancel")}</button>`);}
 function doResetPwd(){const p1=document.getElementById("rpwd1").value,p2=document.getElementById("rpwd2").value;if(p1!==p2){alert(ii("resetErr"));return;}if(p1.length<6){alert(ii("errPwd"));return;}const acc=gA();for(const k in acc){if(acc[k].profil&&acc[k].profil.id===ME.id){acc[k].pwdHash=h(p1);sA(acc);break;}}closeMod();alert(ii("resetOK"));}
 
@@ -918,7 +1120,6 @@ async function loadProfile(){
   // Register Service Worker for PWA
   if("serviceWorker" in navigator){
     navigator.serviceWorker.register("sw.js").then(reg=>{
-      console.log("SW registered:",reg.scope);
     }).catch(err=>console.log("SW error:",err));
   }
   applyLang();
@@ -1072,36 +1273,65 @@ async function renderFeed(){
   const feedEl=document.getElementById("feed");
   feedEl.innerHTML='<p style="text-align:center;color:rgba(255,255,255,.3);padding:20px;font-size:13px">⏳</p>';
   try{
-    // Load posts from Supabase - friends + own
-    const{data:posts,error}=await supa.from("posts")
-      .select("*, profiles(*), reactions(*), comments(*, profiles(*))")
-      .order("pinned",{ascending:false})
-      .order("created_at",{ascending:false})
-      .limit(30);
-    if(error)throw error;
+    let posts=[];
+    if(currentUser){
+      const{data:friendships}=await supa.from("friendships")
+        .select("requester_id,addressee_id")
+        .or("requester_id.eq."+currentUser.id+",addressee_id.eq."+currentUser.id)
+        .eq("status","accepted");
+      const friendIds=(friendships||[]).map(f=>f.requester_id===currentUser.id?f.addressee_id:f.requester_id);
+      const feedIds=[currentUser.id,...friendIds];
+      const{data:friendPosts}=await supa.from("posts")
+        .select("*, profiles(*), reactions(*), comments(*, profiles(*))")
+        .in("user_id",feedIds)
+        .order("pinned",{ascending:false})
+        .order("created_at",{ascending:false})
+        .limit(20);
+      posts=friendPosts||[];
+      if(posts.length<5){
+        const excl=feedIds.length>0?"("+feedIds.join(",")+")" :"('')";
+        const{data:disc}=await supa.from("posts")
+          .select("*, profiles(*), reactions(*), comments(*, profiles(*))")
+          .not("user_id","in",excl)
+          .order("created_at",{ascending:false})
+          .limit(10-posts.length);
+        if(disc){disc.forEach(p=>p._discover=true);posts=[...posts,...disc];}
+      }
+      posts=posts.map(p=>{
+        let s=0;
+        if(p.user_id===currentUser.id)s+=200;
+        else if(friendIds.includes(p.user_id))s+=100;
+        if(p.pinned)s+=500;
+        const age=(Date.now()-new Date(p.created_at))/3600000;
+        if(age<24)s+=Math.round(50*(1-age/24));
+        s+=(p.reactions||[]).length*2+(p.comments||[]).length*3;
+        return{...p,_score:s};
+      }).sort((a,b)=>b._score-a._score);
+    }else{
+      const{data:pub}=await supa.from("posts")
+        .select("*, profiles(*), reactions(*), comments(*, profiles(*))")
+        .order("created_at",{ascending:false}).limit(10);
+      posts=pub||[];
+    }
     if(!posts||posts.length===0){
-      feedEl.innerHTML='<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">🌟 '+( lang==="fr"?"Ton fil est vide — sois le premier à publier !":lang==="en"?"Be the first to post!":"¡Sé el primero en publicar!")+'</p>';
+      feedEl.innerHTML=`<div style="text-align:center;padding:40px 20px"><div style="font-size:48px;margin-bottom:12px">🌟</div><div style="font-family:var(--fh);font-size:16px;font-weight:700;color:#fff;margin-bottom:8px">${lang==="fr"?"Ton fil est vide !":"Your feed is empty!"}</div><div style="color:rgba(255,255,255,.4);font-size:13px;margin-bottom:16px">${lang==="fr"?"Ajoute des amis pour voir leurs publications":"Add friends to see their posts"}</div><button onclick="goTab('discover')" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:12px;padding:10px 20px;color:#fff;font-family:var(--fh);font-weight:700;cursor:pointer">${lang==="fr"?"Découvrir des élèves":"Discover students"}</button></div>`;
       return;
     }
     const activeAds=getActiveAds();let adIdx=0;let feedHtml="";
     posts.forEach((p,i)=>{
       const u=p.profiles||{nom:"?",avatar:"?",couleur:"#888",niveau:"",etablissement:""};
       const isMe=currentUser&&p.user_id===currentUser.id;
-      feedHtml+=supaPostCard(u,p,isMe);
+      const disc=p._discover?`<div style="font-size:11px;color:rgba(255,255,255,.3);margin-bottom:4px">🔍 ${lang==="fr"?"Découverte":"Discover"}</div>`:"";
+      feedHtml+=disc+supaPostCard(u,p,isMe);
       if((i+1)%5===0&&adIdx<activeAds.length){feedHtml+=adCard(activeAds[adIdx]);adIdx++;}
     });
     feedEl.innerHTML=feedHtml;
   }catch(e){
     console.error("Feed error:",e);
-    // Fallback to local data
-    let all=[];
-    [ME,...ME.amis.map(id=>getUser(id)).filter(u=>u&&!u.isPrivate)].forEach(u=>{if(u)u.posts.forEach(p=>all.push({u,p,isMe:u.id===0}));});
-    all.sort((a,b)=>(b.p.pinned&&!a.p.pinned?1:a.p.pinned&&!b.p.pinned?-1:0)||(b.p.ts||0)-(a.p.ts||0));
-    const activeAds=getActiveAds();let adIdx=0;let feedHtml="";
-    all.forEach(({u,p,isMe},i)=>{feedHtml+=postCard(u,p,isMe);if((i+1)%5===0&&adIdx<activeAds.length){feedHtml+=adCard(activeAds[adIdx]);adIdx++;}});
-    feedEl.innerHTML=feedHtml||'<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">🌟</p>';
+    feedEl.innerHTML='<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">⚠️ Erreur de chargement</p>';
   }
 }
+
 
 function supaPostCard(u,p,isMe){
   const lc=levelColor(u.niveau||"");
@@ -1396,17 +1626,12 @@ function startChat(id,nom,avatar,couleur,pic){
   setTimeout(()=>openChat(id,nom,avatar,couleur,pic),100);
 }
 
-function renderFriends(){
-  updBadge();
-  let dHtml="";
-  if(ME.demandesRecues.length>0){
-    dHtml=`<h3 style="font-family:var(--fh);font-size:14px;color:var(--acc);margin:0 0 12px">${ii("requests")} (${ME.demandesRecues.length})</h3>`;
-    ME.demandesRecues.forEach(id=>{const u=getUser(id);if(!u)return;dHtml+=`<div class="card frcard">${mkAv(u.avatar,u.couleur,u.profilePic,44)}<div class="frinfo"><div class="frname">${u.nom}</div><div class="frsub">${u.niveau} · ${u.etablissement}</div></div><button style="background:#2ecc71;border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:13px;cursor:pointer" onclick="acceptFriend(${id})">✓</button><button style="background:rgba(255,255,255,.1);border:none;border-radius:8px;padding:7px 12px;color:#fff;font-size:13px;cursor:pointer;margin-left:6px" onclick="refuseFriend(${id})">✕</button></div>`;});
-  }
-  document.getElementById("dreqs").innerHTML=dHtml;
-  document.getElementById("flist").innerHTML=ME.amis.map(id=>{const u=getUser(id);if(!u)return"";return`<div class="card frcard">${mkAv(u.avatar,u.couleur,u.profilePic,44)}<div class="frinfo"><div class="frname">${u.nom}</div><div class="frsub">${u.niveau} · ${u.etablissement}</div></div><button class="boutline" onclick="openChat(${id});goTab('messages')">💬</button></div>`;}).join("")||`<p class="empty">${lang==="fr"?"Aucun ami.":lang==="en"?"No friends yet.":"Sin amigos."}</p>`;
-}
-function acceptFriend(id){if(!ME.amis.includes(id))ME.amis.push(id);ME.demandesRecues=ME.demandesRecues.filter(x=>x!==id);if(!convos[id])convos[id]=[];const u=getUser(id);if(u)addNotif(ii("nfAcc").replace("{n}",u.nom));persistMe();renderFriends();}
+
+// renderFriends - handled by async version
+
+
+// acceptFriend - handled by async version
+
 function refuseFriend(id){ME.demandesRecues=ME.demandesRecues.filter(x=>x!==id);persistMe();renderFriends();}
 
 // ── MESSAGES ──────────────────────────────────────────
@@ -1421,8 +1646,76 @@ function openChat(id){
   document.getElementById("bnav").style.display="none";
   const chav=document.getElementById("chav");
   if(u.profilePic){chav.innerHTML=`<img src="${u.profilePic}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;}else{chav.innerHTML=u.avatar;chav.style.background=u.couleur;}
-  document.getElementById("chname").textContent=u.nom;renderMsgs();
+  document.getElementById("chname").textContent=u.nom;// renderMsgs() - replaced by Supabase
 }
+function filterConversations(q){
+  const rows = document.querySelectorAll(".convrow");
+  rows.forEach(row=>{
+    const name = row.querySelector("div")?.textContent?.toLowerCase()||"";
+    row.style.display = !q || name.includes(q.toLowerCase()) ? "flex" : "none";
+  });
+}
+
+function toggleGifPicker(){
+  const el = document.getElementById("gif-picker");
+  if(!el) return;
+  if(el.style.display === "none"){
+    el.style.display = "block";
+    searchGifs("happy");
+  } else {
+    el.style.display = "none";
+  }
+}
+
+async function searchGifs(q){
+  if(!q) return;
+  const el = document.getElementById("gif-results");
+  if(!el) return;
+  el.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:12px;text-align:center;padding:10px">⏳</div>';
+  try{
+    // Using Tenor API v2 (free, no key needed for basic usage)
+    const res = await fetch(`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(q)}&key=AIzaSyAzBaLpBBLrpd2L_JkzV6VLhMGMBxTXBR4&limit=9&media_filter=gif`);
+    const data = await res.json();
+    if(data.results && data.results.length > 0){
+      el.innerHTML = data.results.map(g=>{
+        const url = g.media_formats?.tinygif?.url || g.media_formats?.gif?.url;
+        return url ? `<img src="${url}" style="width:100%;border-radius:8px;cursor:pointer;object-fit:cover;height:70px" onclick="sendGif('${url}')" loading="lazy">` : "";
+      }).join("");
+    } else {
+      el.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:12px;text-align:center;padding:10px">Aucun GIF trouvé</div>';
+    }
+  }catch(e){
+    el.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:12px;text-align:center;padding:10px">Erreur de chargement</div>';
+  }
+}
+
+async function sendGif(url){
+  if(!currentUser || !activeChatId) return;
+  document.getElementById("gif-picker").style.display = "none";
+  await supa.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatId,text:null,img:url});
+}
+
+// Popular stickers/emojis
+const STICKERS = ["😂","🔥","❤️","🎉","👏","😎","🥳","💯","😍","🤣","😭","🙏","💪","✨","🎓","📚","⚽","🎵","🌟","😊"];
+
+function toggleStickerPicker(){
+  const existing = document.getElementById("sticker-picker");
+  if(existing){ existing.remove(); return; }
+  const div = document.createElement("div");
+  div.id = "sticker-picker";
+  div.style.cssText = "position:absolute;bottom:70px;right:0;background:rgba(20,20,40,.98);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:6px;width:200px;z-index:10";
+  div.innerHTML = STICKERS.map(s=>`<span onclick="sendSticker('${s}')" style="font-size:24px;cursor:pointer;padding:4px">${s}</span>`).join("");
+  document.getElementById("chat-input-bar").style.position = "relative";
+  document.getElementById("chat-input-bar").appendChild(div);
+}
+
+async function sendSticker(emoji){
+  const existing = document.getElementById("sticker-picker");
+  if(existing) existing.remove();
+  if(!currentUser || !activeChatId) return;
+  await supa.from("messages").insert({sender_id:currentUser.id,receiver_id:activeChatId,text:emoji});
+}
+
 function closeChat(){showConvoList();document.getElementById("bnav").style.display="flex";}
 function renderMsgs(){
   const conv=convos[activeChat]||[];
@@ -1472,27 +1765,53 @@ function saveEditMsg(idx){
   const txt=ta.value.trim();if(!txt)return;
   const conv=convos[activeChat];if(!conv||!conv[idx])return;
   conv[idx].text=txt;conv[idx].edited=true;
-  closeMod();renderMsgs();
+  closeMod();// renderMsgs() - replaced by Supabase
 }
 function deleteMsg(idx){
   const conv=convos[activeChat];if(!conv)return;
   conv.splice(idx,1);
-  closeMod();renderMsgs();
+  closeMod();// renderMsgs() - replaced by Supabase
 }
-function sendMsg(){
-  const inp=document.getElementById("cinput");const txt=inp.value.trim();
-  if(!txt&&!gPendingImg)return;
-  if(!convos[activeChat])convos[activeChat]=[];
-  const msg={from:0,text:txt,time:nowt(),status:"delivered",img:null};
-  if(replyingTo){msg.replyTo=replyingTo;cancelReply();}
-  convos[activeChat].push(msg);
-  inp.value="";renderMsgs();
-  const cid=activeChat;
-  setTimeout(()=>{convos[cid].push({from:cid,text:REPLIES[Math.floor(Math.random()*REPLIES.length)],time:nowt(),status:"read",img:null});if(activeChat===cid)renderMsgs();},700+Math.random()*900);
-}
-function sendImgMsg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{if(!convos[activeChat])convos[activeChat]=[];convos[activeChat].push({from:0,text:"📷",img:ev.target.result,time:nowt(),status:"delivered"});renderMsgs();};r.readAsDataURL(f);document.getElementById("chu").value="";}
+// sendMsg handled by async Supabase version
+function sendImgMsg(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{if(!convos[activeChat])convos[activeChat]=[];convos[activeChat].push({from:0,text:"📷",img:ev.target.result,time:nowt(),status:"delivered"});// renderMsgs() - replaced by Supabase};r.readAsDataURL(f);document.getElementById("chu").value="";}
 
 // ── PROFILE ───────────────────────────────────────────
+async function loadProfileStats(){
+  if(!currentUser) return;
+  try{
+    const[{count:postCount},{count:friendCount},{count:likeCount}] = await Promise.all([
+      supa.from("posts").select("*",{count:"exact",head:true}).eq("user_id",currentUser.id),
+      supa.from("friendships").select("*",{count:"exact",head:true}).or("requester_id.eq."+currentUser.id+",addressee_id.eq."+currentUser.id).eq("status","accepted"),
+      supa.from("reactions").select("*",{count:"exact",head:true}).in("post_id",
+        (await supa.from("posts").select("id").eq("user_id",currentUser.id)).data?.map(p=>p.id)||[]
+      )
+    ]);
+    
+    const statsEl = document.getElementById("profile-stats");
+    if(statsEl){
+      statsEl.innerHTML = `
+        <div style="display:flex;gap:0;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);margin:12px 0">
+          <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid rgba(255,255,255,.06)">
+            <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:#fff">${postCount||0}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4)">Posts</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid rgba(255,255,255,.06)">
+            <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:#fff">${friendCount||0}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4)">Amis</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid rgba(255,255,255,.06)">
+            <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:#fff">${likeCount||0}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4)">Likes reçus</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:12px 0">
+            <div style="font-family:var(--fh);font-size:20px;font-weight:800;color:#fff">${ME.profile_views||0}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4)">Vues</div>
+          </div>
+        </div>`;
+    }
+  }catch(e){console.error("Stats error:",e);}
+}
+
 function renderMyProfile(){renderProfilePage(ME,true);}
 function viewProfile(id){const u=getUser(id);if(u&&u.isPrivate&&!ME.amis.includes(u.id)){renderLockedProfile(u);}else if(u)renderProfilePage(u,false);goTab("profile");}
 function renderLockedProfile(u){
@@ -1542,6 +1861,26 @@ function renderProfilePage(u,isOwn){
 }
 function pickAvatar(){const e=document.getElementById("avpick");if(e)e.click();}
 function pickCover(){const e=document.getElementById("cvpick");if(e)e.click();}
+async function compressImage(file, maxWidth=800, quality=0.8){
+  return new Promise(resolve=>{
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let w = img.width, h = img.height;
+        if(w > maxWidth){ h = h * maxWidth / w; w = maxWidth; }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(blob => resolve(blob), "image/jpeg", quality);
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function applyAvatar(e){
   const f=e.target.files[0];if(!f)return;
   const r=new FileReader();
@@ -1589,48 +1928,7 @@ function addPhotoEmoji(){const inp=document.getElementById("ph-inp");const emoji
 function addPhotoFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{ME.photos.unshift(ev.target.result);persistMe();renderMyProfile();};r.readAsDataURL(f);}
 
 // ── NOTIFS ────────────────────────────────────────────
-async function renderNotifs(){
-  const el=document.getElementById("nlist");
-  if(!el)return;
-  if(!currentUser){el.innerHTML="";return;}
-  try{
-    const{data:notifData}=await supa.from("notifications")
-      .select("*")
-      .eq("user_id",currentUser.id)
-      .order("created_at",{ascending:false})
-      .limit(30);
-    
-    if(!notifData||notifData.length===0){
-      el.innerHTML=`<p style="text-align:center;color:rgba(255,255,255,.3);padding:40px 0;font-size:13px">${ii("noNf")}</p>`;
-      return;
-    }
-    
-    el.innerHTML=notifData.map(n=>`
-      <div class="nrow${n.read?"":" unread"}" onclick="markNotifRead('${n.id}')">
-        <div style="font-size:20px">${n.type==="like"?"❤️":n.type==="comment"?"💬":n.type==="friend_request"?"👤":n.type==="friend_accept"?"✅":"🔔"}</div>
-        <div style="flex:1">
-          <div style="font-size:13px">${n.text}</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.3);margin-top:2px">${new Date(n.created_at).toLocaleString()}</div>
-        </div>
-        ${!n.read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--acc);flex-shrink:0"></div>':""}
-      </div>`).join("");
-    
-    // Mark all as read
-    await supa.from("notifications").update({read:true}).eq("user_id",currentUser.id).eq("read",false);
-    updBadge();
-  }catch(e){console.error("Notifs error:",e);}
-}
-
-async function markNotifRead(id){
-  await supa.from("notifications").update({read:true}).eq("id",id);
-}
-
-async function updBadge(){
-  if(!currentUser)return;
-  const{count}=await supa.from("notifications").select("*",{count:"exact",head:true}).eq("user_id",currentUser.id).eq("read",false);
-  updNDot(count||0);
-}
-
+async // renderNotifs handled by async version
 function renderNotifs(){notifs.forEach(n=>n.read=true);updNDot();document.getElementById("nflist").innerHTML=notifs.length?notifs.map(n=>`<div class="card nfitem"><div class="nfdot r"></div><div><div class="nftext">${n.txt}</div><div class="nftime">${n.time}</div></div></div>`).join(""):`<p class="empty" style="text-align:center;padding:30px">${ii("noNf")}</p>`;}
 function clearNotifs(){notifs=[];renderNotifs();}
 
@@ -1951,6 +2249,64 @@ function submitReport(id,reason){reports.push({userId:id,reason,ts:Date.now()});
 function blockUser(id){if(!(ME.blocked||[]).includes(id)){if(!ME.blocked)ME.blocked=[];ME.blocked.push(id);}ME.amis=ME.amis.filter(x=>x!==id);persistMe();alert(ii("blockedMsg"));goTab("discover");}
 
 // ── ADMIN ─────────────────────────────────────────────
+async function renderAdminAnalytics(){
+  try{
+    const now = new Date();
+    const weekAgo = new Date(now - 7*24*60*60*1000).toISOString();
+    const monthAgo = new Date(now - 30*24*60*60*1000).toISOString();
+
+    const[
+      {count:totalUsers},
+      {count:newUsersWeek},
+      {count:totalPosts},
+      {count:postsWeek},
+      {data:countries}
+    ] = await Promise.all([
+      supa.from("profiles").select("*",{count:"exact",head:true}),
+      supa.from("profiles").select("*",{count:"exact",head:true}).gte("created_at",weekAgo),
+      supa.from("posts").select("*",{count:"exact",head:true}),
+      supa.from("posts").select("*",{count:"exact",head:true}).gte("created_at",weekAgo),
+      supa.from("profiles").select("pays").not("pays","is",null)
+    ]);
+
+    // Count by country
+    const countryMap = {};
+    (countries||[]).forEach(p=>{if(p.pays)countryMap[p.pays]=(countryMap[p.pays]||0)+1;});
+    const topCountries = Object.entries(countryMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+
+    const analyticsEl = document.getElementById("analytics-panel");
+    if(analyticsEl){
+      analyticsEl.innerHTML = `
+        <div class="slabel" style="margin-bottom:12px">📈 ANALYTICS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+          <div style="background:rgba(233,30,140,.1);border:1px solid rgba(233,30,140,.2);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-family:var(--fh);font-size:28px;font-weight:800;color:var(--acc)">${totalUsers||0}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.5)">Élèves inscrits</div>
+            <div style="font-size:11px;color:#2ecc71;margin-top:2px">+${newUsersWeek||0} cette semaine</div>
+          </div>
+          <div style="background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.2);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-family:var(--fh);font-size:28px;font-weight:800;color:#34d399">${totalPosts||0}</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.5)">Publications</div>
+            <div style="font-size:11px;color:#2ecc71;margin-top:2px">+${postsWeek||0} cette semaine</div>
+          </div>
+        </div>
+        ${topCountries.length>0?`
+        <div style="background:rgba(255,255,255,.04);border-radius:12px;padding:12px;margin-bottom:12px">
+          <div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:8px;font-family:var(--fh)">🌍 TOP PAYS</div>
+          ${topCountries.map(([country,count])=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:13px">${country}</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                <div style="height:6px;width:${Math.round(count/(topCountries[0][1]||1)*80)}px;background:var(--acc);border-radius:99px"></div>
+                <span style="font-size:12px;color:rgba(255,255,255,.5)">${count}</span>
+              </div>
+            </div>`).join("")}
+        </div>`:""}
+      `;
+    }
+  }catch(e){console.error("Analytics error:",e);}
+}
+
 function renderAdmin(){
   const acc=gA();const uc=Object.keys(acc).length+FAKE.length;const pc=Object.values(acc).reduce((s,a)=>s+((a.profil&&a.profil.posts)||[]).length,0)+FAKE.reduce((s,u)=>s+u.posts.length,0);
   document.getElementById("ad-nu").textContent=uc;document.getElementById("ad-np").textContent=pc;document.getElementById("ad-nr").textContent=reports.length;
@@ -2005,10 +2361,35 @@ function openMod(title,body){document.getElementById("mtitle").textContent=title
 function closeMod(){document.getElementById("moverlay").classList.remove("open");}
 
 // ── THEME / FONT / SIZE / LANG ────────────────────────
+function toggleLightMode(on){
+  const isLight = on !== undefined ? on : !document.body.classList.contains("light-mode");
+  document.body.classList.toggle("light-mode", isLight);
+  localStorage.setItem("ec_lightmode", isLight ? "1" : "0");
+  const toggle = document.getElementById("lightmode-toggle");
+  if(toggle) toggle.checked = isLight;
+  const thumb = document.getElementById("lightmode-thumb");
+  if(thumb) thumb.style.transform = isLight ? "translateX(20px)" : "translateX(0)";
+}
+
+// Restore light mode preference
+(function(){
+  if(localStorage.getItem("ec_lightmode") === "1") toggleLightMode(true);
+})();
+
 function setTheme(t){["ocean","forest","sunset"].forEach(c=>document.body.classList.remove("t-"+c));if(t!=="violet")document.body.classList.add("t-"+t);document.querySelectorAll(".tswatch").forEach(s=>s.classList.remove("selected"));document.getElementById("sw-"+t).classList.add("selected");const bg={violet:["#0f0c29","#302b63","#24243e"],ocean:["#021e38","#0c3b60","#061428"],forest:["#052010","#0f3d1e","#041508"],sunset:["#1c0a00","#3b1600","#120600"]};const[b1,b2,b3]=(bg[t]||bg.violet);document.body.style.background=`linear-gradient(160deg,${b1},${b2} 60%,${b3})`;localStorage.setItem("ec_theme",t);}
 function setFont(f){["playfair","mono","pacifico"].forEach(c=>document.body.classList.remove("f-"+c));if(f!=="default")document.body.classList.add("f-"+f);document.querySelectorAll(".fcrd").forEach(c=>c.classList.remove("selected"));document.getElementById("fc-"+f).classList.add("selected");localStorage.setItem("ec_font",f);}
 function setFontSize(v){document.documentElement.style.setProperty("--fs",v+"px");const p=document.getElementById("szprev");if(p)p.style.fontSize=v+"px";localStorage.setItem("ec_fs",v);}
-function setLang(l){lang=l;localStorage.setItem("ec_lang",l);["fr","en","es"].forEach(x=>document.getElementById("lang-"+x).classList.toggle("selected",x===l));applyLang();renderPrompts();if(currentTab)goTab(currentTab);}
+function setLang(l){
+  lang=l;localStorage.setItem("ec_lang",l);
+  ["fr","en","es","pt","ar"].forEach(x=>{
+    const el=document.getElementById("lang-"+x);
+    if(el)el.classList.toggle("selected",x===l);
+  });
+  // RTL for Arabic
+  document.documentElement.dir = l==="ar"?"rtl":"ltr";
+  document.documentElement.lang = l;
+  applyLang();renderPrompts();if(currentTab)goTab(currentTab);
+}
 
 
 
@@ -2366,11 +2747,10 @@ function persistMe(){const acc=gA();for(const k in acc){if(acc[k].profil&&acc[k]
   const t=localStorage.getItem("ec_theme");if(t)setTheme(t);
   const f=localStorage.getItem("ec_font");if(f)setFont(f);
   const fs=localStorage.getItem("ec_fs");if(fs)setFontSize(fs);
-  ["fr","en","es"].forEach(x=>{const el=document.getElementById("lang-"+x);if(el)el.classList.toggle("selected",x===lang);});
+  ["fr","en","es","pt","ar"].forEach(x=>{const el=document.getElementById("lang-"+x);if(el)el.classList.toggle("selected",x===lang);});
 })();
-</script>
-</body>
-</html>async function createGroupSupa(){
+
+async function createGroupSupa(){
   const name=document.getElementById("ng-name").value.trim();
   const desc=document.getElementById("ng-desc").value.trim();
   const emoji=document.getElementById("ng-emoji").value.trim()||"👥";
@@ -2389,3 +2769,10 @@ function persistMe(){const acc=gA();for(const k in acc){if(acc[k].profil&&acc[k]
 }
 
 
+
+
+// ── APP READY ─────────────────────────────────────────
+if(typeof window !== "undefined") window._EtuConnect = {version:"1.0.0",ready:true};
+</script>
+</body>
+</html>
