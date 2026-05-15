@@ -877,7 +877,7 @@ async function createGroup(){
     var res=await supa.from("groups").insert({name:name,type:type,description:desc||null,created_by:currentUser.id}).select().single();
     if(res.error){var m=qs("g-msg");if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent=res.error.message;}return;}
     // Auto-join as member
-    await supa.from("group_members").insert({group_id:res.data.id,user_id:currentUser.id,role:"admin"});
+    await supa.from("group_members").insert({group_id:res.data.id,user_id:currentUser.id,role:"president"});
     closeMod();
     toast("Groupe créé !");
     await renderGroups();
@@ -895,35 +895,96 @@ async function joinGroup(gid){
   }catch(e){toast("Déjà membre ou erreur.");}
 }
 
+var ROLES={president:"👑 Président",vice_president:"⭐ Vice-Président",secretaire:"📋 Secrétaire",member:"👤 Membre"};
+
 async function openGroup(gid){
   try{
     var res=await supa.from("groups").select("*").eq("id",gid).single();
     var g=res.data;if(!g)return;
-    var mres=await supa.from("group_members").select("*,profiles(nom,avatar,couleur,profile_pic)").eq("group_id",gid).limit(20);
+    var mres=await supa.from("group_members").select("*,profiles(id,nom,avatar,couleur,profile_pic)").eq("group_id",gid).order("joined_at",{ascending:true});
     var members=mres.data||[];
+
+    // Find current user's role
+    var myMembership=members.find(function(m){return currentUser&&m.user_id===currentUser.id;});
+    var myRole=myMembership?myMembership.role:null;
+    var isPresident=myRole==="president";
+    var isLeader=myRole==="president"||myRole==="vice_president";
+    var isMember=!!myMembership;
+
     var typeEmoji={club:"🎯",classe:"📚",cours:"📖"};
-    var html="<div style='margin-bottom:16px'>";
-    html+="<div style='font-size:28px;margin-bottom:4px'>"+(typeEmoji[g.type]||"👥")+"</div>";
-    html+="<div style='font-family:var(--fh);font-size:18px;font-weight:900;margin-bottom:6px'>"+g.name+"</div>";
-    if(g.description)html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:12px'>"+g.description+"</div>";
+    var html="<div style='margin-bottom:14px'>";
+    html+="<div style='font-size:26px;margin-bottom:4px'>"+(typeEmoji[g.type]||"👥")+"</div>";
+    html+="<div style='font-family:var(--fh);font-size:18px;font-weight:900;margin-bottom:4px'>"+g.name+"</div>";
+    if(g.description)html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:8px'>"+g.description+"</div>";
+    if(myRole)html+="<div style='font-size:12px;color:var(--acc);font-weight:700'>"+( ROLES[myRole]||myRole)+"</div>";
     html+="</div>";
+
     html+="<div style='font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:10px'>MEMBRES ("+members.length+")</div>";
-    html+="<div style='display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px'>";
+    html+="<div style='margin-bottom:16px'>";
     members.forEach(function(m){
       var u=m.profiles||{};
       var ini=(u.avatar||(u.nom||"?").slice(0,2).toUpperCase()).trim();
-      html+="<div style='text-align:center'>";
-      html+=mkAv(ini,u.couleur,u.profile_pic,40);
-      html+="<div style='font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>"+(u.nom||"?").split(" ")[0]+"</div>";
+      var roleLabel=ROLES[m.role]||m.role;
+      html+="<div style='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)'>";
+      html+=mkAv(ini,u.couleur,u.profile_pic,36);
+      html+="<div style='flex:1'><div style='font-size:14px;font-weight:600'>"+(u.nom||"?")+"</div>";
+      html+="<div style='font-size:11px;color:rgba(255,255,255,.4)'>"+roleLabel+"</div></div>";
+      // Leader can change roles of non-presidents
+      if(isLeader&&m.role!=="president"&&m.user_id!==currentUser.id){
+        html+="<button data-mid='"+m.id+"' data-uid='"+m.user_id+"' data-gid='"+gid+"' onclick='changeRole(this)' style='background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;cursor:pointer'>Rôle</button>";
+      }
       html+="</div>";
     });
     html+="</div>";
-    html+="<button class='btn-acc' data-gid='"+gid+"' onclick='joinGroup(this.dataset.gid)'>Rejoindre</button>";
+
+    if(!isMember){
+      html+="<button class='btn-acc' data-gid='"+gid+"' onclick='joinGroup(this.dataset.gid)'>Rejoindre</button>";
+    }
     if(g.type==="classe"){
       html+="<button class='mbtn' data-gid='"+gid+"' onclick='openQuizzes(this.dataset.gid)' style='margin-top:8px'>📝 Quiz de la classe</button>";
     }
+    if(isPresident){
+      html+="<button data-gid='"+gid+"' data-gname='"+g.name.replace(/'/g,"")+"' onclick='confirmDeleteGroup(this.dataset.gid,this.dataset.gname)' style='width:100%;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:11px;color:#e74c3c;font-size:14px;cursor:pointer;margin-top:8px'>🗑️ Supprimer le groupe</button>";
+    }
     html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
     openMod(g.name,html);
+  }catch(e){toast("Erreur: "+e.message);}
+}
+
+function changeRole(btn){
+  var mid=btn.dataset.mid;
+  var uid=btn.dataset.uid;
+  var gid=btn.dataset.gid;
+  var html="<div style='margin-bottom:12px;font-size:13px;color:rgba(255,255,255,.6)'>Choisir un rôle :</div>";
+  ["vice_president","secretaire","member"].forEach(function(r){
+    html+="<button data-mid='"+mid+"' data-role='"+r+"' onclick='setRole(this.dataset.mid,this.dataset.role)' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px;text-align:left'>"+ROLES[r]+"</button>";
+  });
+  html+="<button class='mbtn cancel' onclick='closeMod()'>Annuler</button>";
+  openMod("Changer le rôle",html);
+}
+
+async function setRole(mid,role){
+  var res=await supa.from("group_members").update({role:role}).eq("id",mid);
+  if(res.error){toast("Erreur: "+res.error.message);}
+  else{toast("Rôle mis à jour !");closeMod();}
+}
+
+function confirmDeleteGroup(gid,name){
+  var html="<div style='text-align:center;margin-bottom:16px'>";
+  html+="<div style='font-size:36px;margin-bottom:8px'>⚠️</div>";
+  html+="<p style='color:rgba(255,255,255,.6);font-size:13px'>Supprimer <strong>"+name+"</strong> ? Cette action est irréversible.</p></div>";
+  html+="<button data-gid='"+gid+"' onclick='deleteGroup(this.dataset.gid)' style='width:100%;background:rgba(231,76,60,.9);border:none;border-radius:12px;padding:12px;color:#fff;font-weight:700;cursor:pointer;margin-bottom:8px'>Supprimer</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()'>Annuler</button>";
+  openMod("Supprimer le groupe",html);
+}
+
+async function deleteGroup(gid){
+  try{
+    await supa.from("group_members").delete().eq("group_id",gid);
+    await supa.from("groups").delete().eq("id",gid);
+    closeMod();
+    toast("Groupe supprimé.");
+    renderGroups();
   }catch(e){toast("Erreur: "+e.message);}
 }
 
