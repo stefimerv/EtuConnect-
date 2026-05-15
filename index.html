@@ -289,8 +289,17 @@ let currentUser = null, ME = {}, currentTab = "home", pendingPostImg = null;
 function qs(id){return document.getElementById(id);}
 function mkAv(ini,col,pic,sz){
   sz=sz||44;
-  if(pic) return '<div class="av" style="width:'+sz+'px;height:'+sz+'px"><img src="'+pic+'"></div>';
-  return '<div class="av" style="width:'+sz+'px;height:'+sz+'px;font-size:'+Math.round(sz*.36)+'px;background:'+(col||"#888")+'">'+(ini||"?")+' </div>';
+  if(pic&&pic.length>10){
+    var d=document.createElement("div");
+    d.className="av";
+    d.style.cssText="width:"+sz+"px;height:"+sz+"px";
+    var img=document.createElement("img");
+    img.src=pic;
+    img.style.cssText="width:100%;height:100%;object-fit:cover;border-radius:50%";
+    d.appendChild(img);
+    return d.outerHTML;
+  }
+  return '<div class="av" style="width:'+sz+'px;height:'+sz+'px;font-size:'+Math.round(sz*.36)+'px;background:'+(col||"#888")+'">'+(ini||"?")+'</div>';
 }
 function showErr(m){var e=qs("aerr");if(e){e.style.display="block";e.textContent=m;}}
 function hideErr(){var e=qs("aerr");if(e)e.style.display="none";}
@@ -481,8 +490,9 @@ async function publishStory(){
     await supa.from("stories").insert({user_id:currentUser.id,img:pendingStoryImg||null,text:txt||null,expires_at:expires});
     pendingStoryImg=null;
     closeMod();
+    pendingStoryImg=null;
     toast("Story publiée ! Disparaîtra dans 24h ✨");
-    renderStories();
+    await renderStories();
   }catch(e){
     var m=qs("story-msg");
     if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Erreur: "+e.message;}
@@ -770,7 +780,7 @@ async function renderGroups(){
   var el=qs("groups-list");if(!el)return;
   el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
   try{
-    var query=supa.from("groups").select("*,group_members(count)").order("created_at",{ascending:false});
+    var query=supa.from("groups").select("*").order("created_at",{ascending:false});
     if(currentGroupFilter!=="all") query=query.eq("type",currentGroupFilter);
     var res=await query;
     var groups=res.data||[];
@@ -782,7 +792,7 @@ async function renderGroups(){
     groups.forEach(function(g){
       var typeInfo={club:{emoji:"🎯",color:"#e91e8c",label:"Club"},classe:{emoji:"📚",color:"#1a73e8",label:"Classe"},cours:{emoji:"📖",color:"#2ecc71",label:"Cours"}};
       var t=typeInfo[g.type]||{emoji:"👥",color:"#888",label:g.type};
-      var members=(g.group_members&&g.group_members[0])?g.group_members[0].count:0;
+      var members=0;
       html+="<div class='gcard' data-gid='"+g.id+"' onclick='openGroup(this.dataset.gid)'>";
       html+="<div class='gcard-head'>";
       html+="<div class='gicon' style='background:"+t.color+"22;border:1px solid "+t.color+"44'>"+t.emoji+"</div>";
@@ -832,7 +842,9 @@ async function createGroup(){
     await supa.from("group_members").insert({group_id:res.data.id,user_id:currentUser.id,role:"admin"});
     closeMod();
     toast("Groupe créé !");
-    renderGroups();
+    await renderGroups();
+    // Make sure groups panel is visible
+    switchGroupsTab('groups');
   }catch(e){toast("Erreur: "+e.message);}
 }
 
