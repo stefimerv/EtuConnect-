@@ -249,10 +249,16 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
 
 <div id="tab-groups" class="tab">
   <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
     <h2 style="font-family:var(--fh);font-size:18px">Groupes</h2>
-    <button onclick="showCreateGroup()" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Créer</button>
+    <button id="btn-create-main" onclick="showCreateGroup()" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Créer</button>
   </div>
+  <!-- Sub tabs -->
+  <div style="display:flex;background:rgba(255,255,255,.08);border-radius:12px;padding:4px;margin-bottom:16px">
+    <button class="atab active" id="subtab-groups" onclick="switchGroupsTab('groups')">🏫 Groupes</button>
+    <button class="atab" id="subtab-events" onclick="switchGroupsTab('events')">📅 Événements</button>
+  </div>
+  <div id="groups-panel">
   <!-- Type filter -->
   <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
     <button class="gfilter active" data-type="all" onclick="filterGroups('all',this)">Tous</button>
@@ -261,6 +267,10 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
     <button class="gfilter" data-type="cours" onclick="filterGroups('cours',this)">📖 Cours partagés</button>
   </div>
   <div id="groups-list"></div>
+  </div><!-- end groups-panel -->
+  <div id="events-panel" style="display:none">
+    <div id="events-list"></div>
+  </div>
 </div>
 
 <div id="modal" onclick="if(event.target===this)closeMod()">
@@ -848,6 +858,154 @@ async function openGroup(gid){
     html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
     openMod(g.name,html);
   }catch(e){toast("Erreur: "+e.message);}
+}
+
+// EVENTS
+function switchGroupsTab(tab){
+  qs("subtab-groups").classList.toggle("active", tab==="groups");
+  qs("subtab-events").classList.toggle("active", tab==="events");
+  qs("groups-panel").style.display = tab==="groups"?"block":"none";
+  qs("events-panel").style.display = tab==="events"?"block":"none";
+  var btn=qs("btn-create-main");
+  if(tab==="groups"){btn.textContent="+ Créer";btn.onclick=showCreateGroup;}
+  else{btn.textContent="+ Événement";btn.onclick=showCreateEvent;}
+  if(tab==="events") renderEvents();
+}
+
+async function renderEvents(){
+  var el=qs("events-list");if(!el)return;
+  el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
+  try{
+    var res=await supa.from("events").select("*,profiles(nom,avatar,couleur,profile_pic),event_attendees(count)").order("event_date",{ascending:true});
+    var evts=res.data||[];
+    if(!evts.length){
+      el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun événement.<br>Crée le premier!</p>";
+      return;
+    }
+    var html="";
+    evts.forEach(function(ev){
+      var d=new Date(ev.event_date);
+      var isPast=d<new Date();
+      var attendees=(ev.event_attendees&&ev.event_attendees[0])?ev.event_attendees[0].count:0;
+      var dayNames=["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+      var monthNames=["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"];
+      html+="<div class='gcard' style='opacity:"+(isPast?.5:1)+"'>";
+      html+="<div style='display:flex;gap:12px;align-items:flex-start'>";
+      // Date block
+      html+="<div style='background:rgba(233,30,140,.1);border:1px solid rgba(233,30,140,.3);border-radius:12px;padding:8px 10px;text-align:center;min-width:48px;flex-shrink:0'>";
+      html+="<div style='font-size:10px;color:var(--acc);font-weight:700'>"+monthNames[d.getMonth()]+"</div>";
+      html+="<div style='font-family:var(--fh);font-size:22px;font-weight:900;line-height:1'>"+d.getDate()+"</div>";
+      html+="<div style='font-size:10px;color:rgba(255,255,255,.4)'>"+dayNames[d.getDay()]+"</div>";
+      html+="</div>";
+      // Info
+      html+="<div style='flex:1'>";
+      html+="<div style='font-weight:700;font-size:15px;margin-bottom:4px'>"+ev.title+"</div>";
+      html+="<div style='font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px'>🕐 "+d.getHours()+"h"+(d.getMinutes()>0?d.getMinutes():"")+(ev.location?" · 📍"+ev.location:"")+"</div>";
+      if(ev.description)html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:8px'>"+ev.description+"</div>";
+      html+="<div style='display:flex;align-items:center;gap:10px'>";
+      html+="<span style='font-size:12px;color:rgba(255,255,255,.4)'>👥 "+attendees+" participant"+(attendees>1?"s":"")+"</span>";
+      if(!isPast)html+="<button data-eid='"+ev.id+"' onclick='attendEvent(this.dataset.eid,this)' style='background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:8px;padding:6px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer'>Participer</button>";
+      if(!isPast)html+="<button data-edate='"+ev.event_date+"' data-etitle='"+ev.title.replace(/'/g,"")+"' onclick='showCountdown(this.dataset.edate,this.dataset.etitle)' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;color:#fff;font-size:12px;cursor:pointer'>⏱</button>";
+      html+="</div></div></div></div>";
+    });
+    el.innerHTML=html;
+  }catch(e){
+    el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur.</p>";
+  }
+}
+
+function showCreateEvent(){
+  var now=new Date();
+  var dateStr=now.toISOString().slice(0,16);
+  var html="<div class='field'><label>TITRE</label><input type='text' id='ev-title' placeholder='Ex: Tournoi de foot, Conférence...'></div>";
+  html+="<div class='field'><label>DATE ET HEURE</label><input type='datetime-local' id='ev-date' value='"+dateStr+"' style='color-scheme:dark'></div>";
+  html+="<div class='field'><label>LIEU (optionnel)</label><input type='text' id='ev-loc' placeholder='Ex: Terrain principal, Salle B2...'></div>";
+  html+="<div class='field'><label>DESCRIPTION</label><input type='text' id='ev-desc' placeholder='Détails de l événement...'></div>";
+  html+="<div id='ev-msg' style='display:none;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px'></div>";
+  html+="<button class='btn-acc' onclick='createEvent()'>Créer l événement</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Annuler</button>";
+  openMod("Nouvel événement",html);
+}
+
+async function createEvent(){
+  var title=(qs("ev-title")||{}).value||"";
+  var date=(qs("ev-date")||{}).value||"";
+  var loc=(qs("ev-loc")||{}).value||"";
+  var desc=(qs("ev-desc")||{}).value||"";
+  var m=qs("ev-msg");
+  if(!title){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Entre un titre.";}return;}
+  if(!date){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Choisis une date.";}return;}
+  if(!currentUser)return;
+  try{
+    var res=await supa.from("events").insert({title:title,event_date:new Date(date).toISOString(),location:loc||null,description:desc||null,created_by:currentUser.id}).select().single();
+    if(res.error){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent=res.error.message;}return;}
+    // Auto-attend
+    await supa.from("event_attendees").insert({event_id:res.data.id,user_id:currentUser.id});
+    closeMod();
+    toast("Événement créé !");
+    renderEvents();
+  }catch(e){toast("Erreur: "+e.message);}
+}
+
+async function attendEvent(eid,btn){
+  if(!currentUser)return;
+  try{
+    await supa.from("event_attendees").insert({event_id:eid,user_id:currentUser.id});
+    btn.textContent="✓ Inscrit";
+    btn.style.background="rgba(46,204,113,.2)";
+    btn.style.border="1px solid rgba(46,204,113,.4)";
+    btn.style.color="#2ecc71";
+    btn.disabled=true;
+    toast("Tu es inscrit à l événement !");
+  }catch(e){toast("Déjà inscrit ou erreur.");}
+}
+
+// COUNTDOWN
+function showCountdown(eventDate, eventTitle){
+  var targetDate=new Date(eventDate);
+  var html="<div style='text-align:center;padding:10px 0'>";
+  html+="<div style='font-size:14px;color:rgba(255,255,255,.5);margin-bottom:8px'>"+eventTitle+"</div>";
+  html+="<div id='countdown-display' style='display:flex;gap:12px;justify-content:center;margin:16px 0'></div>";
+  html+="<div id='countdown-msg' style='font-size:13px;color:rgba(255,255,255,.4)'></div>";
+  html+="</div>";
+  html+="<button class='mbtn cancel' onclick='stopCountdown();closeMod()' style='margin-top:8px'>Fermer</button>";
+  openMod("⏱ Compte à rebours",html);
+  updateCountdown(targetDate);
+  window._countdownInterval=setInterval(function(){updateCountdown(targetDate);},1000);
+}
+
+function updateCountdown(target){
+  var el=qs("countdown-display");
+  var msg=qs("countdown-msg");
+  if(!el)return;
+  var now=new Date();
+  var diff=target-now;
+  if(diff<=0){
+    el.innerHTML="<div style='font-size:24px;color:var(--acc);font-weight:900'>C'est maintenant ! 🎉</div>";
+    if(msg)msg.textContent="";
+    clearInterval(window._countdownInterval);
+    return;
+  }
+  var days=Math.floor(diff/86400000);
+  var hours=Math.floor((diff%86400000)/3600000);
+  var mins=Math.floor((diff%3600000)/60000);
+  var secs=Math.floor((diff%60000)/1000);
+  function block(val,label){
+    return "<div style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px 14px;min-width:60px'>"
+      +"<div style='font-family:var(--fh);font-size:28px;font-weight:900;color:var(--acc)'>"+String(val).padStart(2,"0")+"</div>"
+      +"<div style='font-size:10px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-top:2px'>"+label+"</div>"
+      +"</div>";
+  }
+  el.innerHTML=block(days,"JOURS")+block(hours,"HEURES")+block(mins,"MIN")+block(secs,"SEC");
+  if(msg){
+    var d=target.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    var h=target.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+    msg.textContent="Le "+d+" à "+h;
+  }
+}
+
+function stopCountdown(){
+  clearInterval(window._countdownInterval);
 }
 
 // SETTINGS
