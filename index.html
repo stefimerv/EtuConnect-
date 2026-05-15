@@ -1192,15 +1192,46 @@ async function renderEvents(){
 function showCreateEvent(){
   var now=new Date();
   var dateStr=now.toISOString().slice(0,16);
-  var html="<div class='field'><label>TITRE</label><input type='text' id='ev-title' placeholder='Ex: Tournoi de foot, Conférence...'></div>";
-  html+="<div class='field'><label>DATE ET HEURE</label><input type='datetime-local' id='ev-date' value='"+dateStr+"' style='color-scheme:dark'></div>";
-  html+="<div class='field'><label>LIEU (optionnel)</label><input type='text' id='ev-loc' placeholder='Ex: Terrain principal, Salle B2...'></div>";
-  html+="<div class='field'><label>DESCRIPTION</label><input type='text' id='ev-desc' placeholder='Détails de l événement...'></div>";
-  html+="<div id='ev-msg' style='display:none;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px'></div>";
-  html+="<button class='btn-acc' onclick='createEvent()'>Créer l événement</button>";
-  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Annuler</button>";
-  openMod("Nouvel événement",html);
+
+  // Build form using DOM elements
+  var box=document.createElement("div");
+
+  var f1=document.createElement("div");f1.className="field";
+  f1.innerHTML="<label>TITRE</label><input type='text' id='ev-title' placeholder='Ex: Tournoi de foot...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'>";
+  box.appendChild(f1);
+
+  var f2=document.createElement("div");f2.className="field";
+  f2.innerHTML="<label>DATE ET HEURE</label><input type='datetime-local' id='ev-date' value='"+dateStr+"' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none;color-scheme:dark'>";
+  box.appendChild(f2);
+
+  var f3=document.createElement("div");f3.className="field";
+  f3.innerHTML="<label>LIEU (optionnel)</label><input type='text' id='ev-loc' placeholder='Ex: Auditorium...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'>";
+  box.appendChild(f3);
+
+  var f4=document.createElement("div");f4.className="field";
+  f4.innerHTML="<label>DESCRIPTION</label><input type='text' id='ev-desc' placeholder='Détails...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'>";
+  box.appendChild(f4);
+
+  var btnCreate=document.createElement("button");
+  btnCreate.className="btn-acc";
+  btnCreate.textContent="Créer l'événement";
+  btnCreate.style.marginTop="8px";
+  btnCreate.addEventListener("click", function(){ createEvent(); });
+  box.appendChild(btnCreate);
+
+  var btnCancel=document.createElement("button");
+  btnCancel.className="mbtn cancel";
+  btnCancel.textContent="Annuler";
+  btnCancel.style.marginTop="8px";
+  btnCancel.addEventListener("click", function(){ closeMod(); });
+  box.appendChild(btnCancel);
+
+  // Use openMod with empty content then append
+  openMod("Nouvel événement","");
+  var mc=qs("modal-content");
+  if(mc){mc.innerHTML="";mc.appendChild(box);}
 }
+
 
 async function createEvent(){
   var title=(qs("ev-title")||{}).value||"";
