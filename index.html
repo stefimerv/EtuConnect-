@@ -75,7 +75,7 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
 .comp-actions{display:flex;gap:8px;align-items:center;margin-top:8px}
 .comp-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:7px 12px;color:#fff;font-size:13px;cursor:pointer}
 .pub-btn{background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 16px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-left:auto}
-#modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:500;display:none;overflow-y:auto}
+#modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:500;display:none;overflow-y:auto}
 #modal.open{display:block}
 .setting-row{width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:none;border:none;color:#fff;font-size:14px;cursor:pointer;text-decoration:none}
 .setting-row:hover{background:rgba(255,255,255,.03)}
@@ -92,7 +92,7 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
 @keyframes storyProgress{0%{width:0%}100%{width:100%}}
 .gicon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
 .gbadge{font-size:10px;padding:3px 8px;border-radius:99px;font-weight:700}
-#modal-box{background:#1a1a2e;border-radius:0 0 20px 20px;padding:24px;width:100%;max-width:100%;min-height:60vh}
+#modal-box{background:#1a1a2e;border-radius:0 0 16px 16px;padding:24px;width:100%;max-width:100%;min-height:50vh;padding-bottom:80px}
 #modal-title{font-family:var(--fh);font-size:16px;font-weight:700;margin-bottom:16px}
 .mbtn{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px}
 .mbtn.cancel{color:rgba(255,255,255,.4)}
@@ -303,7 +303,12 @@ function mkAv(ini,col,pic,sz){
 }
 function showErr(m){var e=qs("aerr");if(e){e.style.display="block";e.textContent=m;}}
 function hideErr(){var e=qs("aerr");if(e)e.style.display="none";}
-function openMod(title,html){qs("modal-title").textContent=title;qs("modal-content").innerHTML=html;qs("modal").classList.add("open");}
+function openMod(title,html){
+  qs("modal-title").textContent=title;
+  qs("modal-content").innerHTML=html;
+  qs("modal").classList.add("open");
+  qs("modal").scrollTop=0;
+}
 function closeMod(){qs("modal").classList.remove("open");}
 function toast(msg){var t=document.createElement("div");t.style.cssText="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(30,20,60,.97);border:1px solid rgba(233,30,140,.3);border-radius:99px;padding:10px 18px;color:#fff;font-size:13px;z-index:600;white-space:nowrap";t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},3000);}
 
@@ -1077,14 +1082,18 @@ async function deleteGroup(gid){
 
 // EVENTS
 function switchGroupsTab(tab){
-  qs("subtab-groups").classList.toggle("active", tab==="groups");
-  qs("subtab-events").classList.toggle("active", tab==="events");
-  qs("groups-panel").style.display = tab==="groups"?"block":"none";
-  qs("events-panel").style.display = tab==="events"?"block":"none";
+  var sg=qs("subtab-groups");var se=qs("subtab-events");
+  if(sg)sg.classList.toggle("active",tab==="groups");
+  if(se)se.classList.toggle("active",tab==="events");
+  var gp=qs("groups-panel");var ep=qs("events-panel");
+  if(gp)gp.style.display=tab==="groups"?"block":"none";
+  if(ep)ep.style.display=tab==="events"?"block":"none";
   var btn=qs("btn-create-main");
-  if(tab==="groups"){btn.textContent="+ Créer";btn.onclick=showCreateGroup;}
-  else{btn.textContent="+ Événement";btn.onclick=showCreateEvent;}
-  if(tab==="events") renderEvents();
+  if(btn){
+    if(tab==="groups"){btn.textContent="+ Créer";btn.onclick=function(){showCreateGroup();};}
+    else{btn.textContent="+ Événement";btn.onclick=function(){showCreateEvent();};}
+  }
+  if(tab==="events")renderEvents();
 }
 
 async function renderEvents(){
@@ -1432,14 +1441,26 @@ async function saveProfile(){
   var ville=(qs("edit-ville")||{}).value||"";
   var pays=(qs("edit-pays")||{}).value||"";
   var updates={bio:bio,ville:ville,pays:pays};
-  if(pendingProfilePic)updates.profile_pic=pendingProfilePic;
-  var res=await supa.from("profiles").update(updates).eq("id",currentUser.id);
   var m=qs("edit-msg");
-  if(m){m.style.display="block";m.textContent=res.error?"Erreur: "+res.error.message:"Profil mis a jour!";}
+  if(m){m.style.display="block";m.textContent="Sauvegarde en cours...";}
+
+  if(pendingProfileFile){
+    try{
+      var ext=pendingProfileFile.name.split(".").pop()||"jpg";
+      var path=currentUser.id+"/avatar."+ext;
+      var upRes=await supa.storage.from("Avatars").upload(path,pendingProfileFile,{upsert:true,contentType:pendingProfileFile.type});
+      if(upRes.error){if(m){m.textContent="Erreur photo: "+upRes.error.message;}return;}
+      var pubUrl=supa.storage.from("Avatars").getPublicUrl(path).data.publicUrl;
+      updates.profile_pic=pubUrl+"?v="+Date.now();
+      pendingProfileFile=null;
+    }catch(e){if(m){m.textContent="Erreur: "+e.message;}return;}
+  }
+
+  var res=await supa.from("profiles").update(updates).eq("id",currentUser.id);
+  if(m){m.textContent=res.error?"Erreur: "+res.error.message:"✅ Profil mis à jour !";}
   if(!res.error){
-    pendingProfilePic=null;
     await loadProfile();
-    renderSettingsProfile();
+    await renderSettingsProfile();
     setTimeout(function(){closeMod();},1500);
   }
 }
