@@ -355,13 +355,13 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
 
 /* ── SPLASH ANIMATIONS (working) ─────────────────── */
 .snode{position:absolute;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;background:rgba(255,255,255,.08);border:1.5px solid rgba(233,30,140,.4);opacity:0}
-#sn1{top:-27px;left:50%;transform:translateX(-50%);animation:popTB .5s ease 0.3s both}
-#sn2{top:50%;right:-27px;transform:translateY(-50%);animation:popLR .5s ease 1.0s both}
-#sn3{bottom:-27px;left:50%;transform:translateX(-50%);animation:popTB .5s ease 1.7s both}
-#sn4{top:50%;left:-27px;transform:translateY(-50%);animation:popLR .5s ease 2.4s both}
-.scenter{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;animation:fadeIn .7s ease 3.2s both;z-index:10}
-.stag{text-align:center;opacity:0;animation:fadeIn .7s ease 4.0s both;margin-bottom:22px}
-#sbtns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;opacity:0;animation:fadeIn .7s ease 4.6s both}
+#sn1{top:-27px;left:50%;transform:translateX(-50%);animation:popTB .4s ease 0.2s both}
+#sn2{top:50%;right:-27px;transform:translateY(-50%);animation:popLR .4s ease 0.6s both}
+#sn3{bottom:-27px;left:50%;transform:translateX(-50%);animation:popTB .4s ease 1.0s both}
+#sn4{top:50%;left:-27px;transform:translateY(-50%);animation:popLR .4s ease 1.4s both}
+.scenter{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;animation:fadeIn .6s ease 1.9s both;z-index:10}
+.stag{text-align:center;margin-bottom:22px;}
+#sbtns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;}
 @keyframes popTB{0%{opacity:0;transform:translateX(-50%) scale(0)}70%{transform:translateX(-50%) scale(1.2)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
 @keyframes popLR{0%{opacity:0;transform:translateY(-50%) scale(0)}70%{transform:translateY(-50%) scale(1.2)}100%{opacity:1;transform:translateY(-50%) scale(1)}}
 @keyframes fadeIn{0%{opacity:0}100%{opacity:1}}
@@ -387,8 +387,8 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
   </div>
   <div class="stag" id="stag"><p id="splash-slogan">Rencontre, partage, réussite collective</p></div>
   <div id="sbtns">
-    <button class="sbtn main" id="sbtn-create" onclick="showAuth('register')">Créer un compte</button>
-    <button class="sbtn sec" id="sbtn-login" onclick="showAuth('login')">Se connecter</button>
+    <button class="sbtn main" id="sbtn-create" onclick="try{showAuth('register')}catch(e){alert('Erreur: '+e.message)}">Créer un compte</button>
+    <button class="sbtn sec" id="sbtn-login" onclick="try{showAuth('login')}catch(e){alert('Erreur: '+e.message)}">Se connecter</button>
     <button id="sbtn-install" onclick="installApp()" style="display:none;background:none;border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:12px 0;color:rgba(255,255,255,.6);font-family:var(--fh);font-weight:600;font-size:14px;cursor:pointer;width:100%;margin-top:4px">⬇️ Télécharger l'app</button>
   </div>
 </div>
@@ -447,7 +447,7 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
         <div id="li-tf" style="display:none" class="field" style="display:none"><label id="lbl-lt"></label><div style="display:flex;gap:8px"><select id="l-ind" style="width:90px;background:var(--bg2);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 8px;color:#fff;font-family:var(--fb);font-size:12px;outline:none"><option value="+509">🇭🇹+509</option><option value="+1">🇺🇸+1</option><option value="+33">🇫🇷+33</option><option value="+34">🇪🇸+34</option></select><input type="tel" id="l-tel" placeholder="36 xx xx xx" style="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-family:var(--fb);font-size:14px;outline:none"></div></div>
         <div class="field"><label id="lbl-lp"></label><input type="password" id="l-pwd" placeholder="••••••••"></div>
         <button class="btn-acc" onclick="doLogin()" id="btn-dologin"></button>
-        <button onclick="showAuth('register')" style="width:100%;background:none;border:none;color:rgba(255,255,255,.35);font-size:12px;margin-top:10px;cursor:pointer" id="btn-toreg"></button>
+        <button onclick="try{showAuth('register')}catch(e){alert('Erreur: '+e.message)}" style="width:100%;background:none;border:none;color:rgba(255,255,255,.35);font-size:12px;margin-top:10px;cursor:pointer" id="btn-toreg"></button>
       </div>
       <!-- REG 1 -->
       <div id="rform1" style="display:none">
@@ -462,7 +462,7 @@ input:checked+.toggle-sl:before{transform:translateX(20px)}
         </div>
         <div class="field"><label id="lbl-rp"></label><input type="password" id="r-pwd" placeholder="Min. 6 car."></div>
         <button class="btn-acc" onclick="registerStep2()" id="btn-cont"></button>
-        <button onclick="showAuth('login')" style="width:100%;background:none;border:none;color:rgba(255,255,255,.35);font-size:12px;margin-top:10px;cursor:pointer" id="btn-tologin"></button>
+        <button onclick="try{showAuth('login')}catch(e){alert('Erreur: '+e.message)}" style="width:100%;background:none;border:none;color:rgba(255,255,255,.35);font-size:12px;margin-top:10px;cursor:pointer" id="btn-tologin"></button>
       </div>
       <!-- REG 2 -->
       <div id="rform2" style="display:none">
