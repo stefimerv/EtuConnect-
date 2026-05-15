@@ -247,24 +247,22 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
   <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">👤</span><span>Moi</span></button>
 </div>
 
-<div id="tab-groups" class="tab">
-  <!-- Header -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-    <h2 style="font-family:var(--fh);font-size:18px">Groupes</h2>
-    <button id="btn-create-main" onclick="showCreateGroup()" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Créer</button>
-  </div>
-  <!-- Sub tabs -->
-  <div style="display:flex;background:rgba(255,255,255,.08);border-radius:12px;padding:4px;margin-bottom:16px">
-    <button class="atab active" id="subtab-groups" onclick="switchGroupsTab('groups')">🏫 Groupes</button>
-    <button class="atab" id="subtab-events" onclick="switchGroupsTab('events')">📅 Événements</button>
+<div id="tab-groups" class="tab" style="padding-top:8px">
+  <!-- Sub tabs + create button on same row -->
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <div style="display:flex;background:rgba(255,255,255,.08);border-radius:12px;padding:3px;flex:1">
+      <button class="atab active" id="subtab-groups" onclick="switchGroupsTab('groups')" style="font-size:13px;padding:8px 10px">🏫 Groupes</button>
+      <button class="atab" id="subtab-events" onclick="switchGroupsTab('events')" style="font-size:13px;padding:8px 10px">📅 Événements</button>
+    </div>
+    <button id="btn-create-main" onclick="showCreateGroup()" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:9px 14px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">+ Créer</button>
   </div>
   <div id="groups-panel">
   <!-- Type filter -->
-  <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+  <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
     <button class="gfilter active" data-type="all" onclick="filterGroups('all',this)">Tous</button>
     <button class="gfilter" data-type="club" onclick="filterGroups('club',this)">🎯 Clubs</button>
     <button class="gfilter" data-type="classe" onclick="filterGroups('classe',this)">📚 Classes</button>
-    <button class="gfilter" data-type="cours" onclick="filterGroups('cours',this)">📖 Cours partagés</button>
+    <button class="gfilter" data-type="cours" onclick="filterGroups('cours',this)">📖 Cours</button>
   </div>
   <div id="groups-list"></div>
   </div><!-- end groups-panel -->
@@ -538,7 +536,12 @@ function showStoryViewer(){
 
   // Content
   var body="<div style='flex:1;position:relative;overflow:hidden'>";
-  if(s.img)body+="<img src='"+s.img+"' style='width:100%;height:100%;object-fit:contain'>";
+  if(s.img){
+    body+="<div id='story-img-holder' style='width:100%;height:100%;display:flex;align-items:center;justify-content:center'></div>";
+  }
+  if(!s.img){
+    body+="<div style='width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#302b63,#0f0c29)'></div>";
+  }
   else body+="<div style='width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#302b63,#0f0c29)'></div>";
   if(s.text)body+="<div style='position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:18px;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.8);padding:0 20px'>"+s.text+"</div>";
   // Nav areas
@@ -548,6 +551,16 @@ function showStoryViewer(){
 
   viewer.innerHTML=bars+header+body;
   document.body.appendChild(viewer);
+  // Set story image via DOM to avoid quote issues
+  if(s.img){
+    var holder=qs("story-img-holder");
+    if(holder){
+      var simg=document.createElement("img");
+      simg.src=s.img;
+      simg.style.cssText="width:100%;height:100%;object-fit:contain;max-height:100vh";
+      holder.appendChild(simg);
+    }
+  }
 
   // Auto-advance after 5s
   clearTimeout(window._storyTimer);
@@ -717,8 +730,9 @@ async function sendDM(uid){
 }
 
 // PROFILE
-function renderSettingsProfile(){
+async function renderSettingsProfile(){
   if(!currentUser)return;
+  await loadProfile();
   var av=qs("settings-av");
   var ini=(ME.avatar||(ME.nom||"?").slice(0,2).toUpperCase()).trim();
   if(av)av.innerHTML=mkAv(ini,ME.couleur,ME.profile_pic,56);
