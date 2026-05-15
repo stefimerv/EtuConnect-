@@ -77,6 +77,8 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
 .pub-btn{background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 16px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;margin-left:auto}
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:flex-end;justify-content:center}
 #modal.open{display:flex}
+.setting-row{width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:none;border:none;color:#fff;font-size:14px;cursor:pointer;text-decoration:none}
+.setting-row:hover{background:rgba(255,255,255,.03)}
 #modal-box{background:#1a1a2e;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
 #modal-title{font-family:var(--fh);font-size:16px;font-weight:700;margin-bottom:16px}
 .mbtn{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px}
@@ -170,13 +172,48 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
   </div>
   <div id="tab-profile" class="tab"><div id="profile-content"></div></div>
   <div id="tab-settings" class="tab">
-    <h2 style="font-family:var(--fh);margin-bottom:20px">Paramètres</h2>
-    <button class="mbtn" onclick="showForgotPwd()">🔑 Mot de passe oublié</button>
-    <button class="mbtn" onclick="showChangePwd()">🔑 Changer le mot de passe</button>
-    <button class="mbtn" onclick="showPrivacyPolicy()">📄 Politique de confidentialité</button>
-    <button class="mbtn" onclick="showAbout()">ℹ️ À propos</button>
-    <button class="mbtn" style="color:var(--acc);border-color:rgba(233,30,140,.3)" onclick="logout()">🚪 Se déconnecter</button>
-    <button class="mbtn" style="color:#e74c3c;border-color:rgba(231,76,60,.3);margin-top:20px" onclick="confirmDeleteAccount()">🗑️ Supprimer mon compte</button>
+
+    <!-- PROFIL EN HAUT -->
+    <div id="settings-profile-header" style="display:flex;align-items:center;gap:14px;padding:16px 0 20px;cursor:pointer" onclick="showEditProfile()">
+      <div id="settings-av"></div>
+      <div style="flex:1">
+        <div id="settings-nom" style="font-family:var(--fh);font-size:17px;font-weight:900"></div>
+        <div id="settings-username" style="font-size:13px;color:rgba(255,255,255,.5)"></div>
+      </div>
+      <span style="color:rgba(255,255,255,.3);font-size:18px">›</span>
+    </div>
+
+    <!-- COMPTE style TikTok -->
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;margin-bottom:16px;overflow:hidden">
+      <div style="padding:14px 16px;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,.06)">COMPTE</div>
+      <button class="setting-row" onclick="showAccountInfo()">
+        <span>👤</span><span style="flex:1;text-align:left">Informations du compte</span><span style="color:rgba(255,255,255,.3)">›</span>
+      </button>
+      <button class="setting-row" onclick="showChangePwd()">
+        <span>🔑</span><span style="flex:1;text-align:left">Changer le mot de passe</span><span style="color:rgba(255,255,255,.3)">›</span>
+      </button>
+    </div>
+
+    <!-- CONTENU -->
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;margin-bottom:16px;overflow:hidden">
+      <div style="padding:14px 16px;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,.06)">INFORMATIONS</div>
+      <button class="setting-row" onclick="showPrivacyPolicy()">
+        <span>📄</span><span style="flex:1;text-align:left">Politique de confidentialité</span><span style="color:rgba(255,255,255,.3)">›</span>
+      </button>
+      <button class="setting-row" onclick="showAbout()">
+        <span>ℹ️</span><span style="flex:1;text-align:left">À propos d'ÉtuConnect</span><span style="color:rgba(255,255,255,.3)">›</span>
+      </button>
+    </div>
+
+    <!-- CONNEXION -->
+    <div style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;overflow:hidden">
+      <button class="setting-row" style="color:var(--acc)" onclick="logout()">
+        <span>🚪</span><span style="flex:1;text-align:left">Se déconnecter</span>
+      </button>
+      <button class="setting-row" style="color:#e74c3c;border-top:1px solid rgba(255,255,255,.06)" onclick="confirmDeleteAccount()">
+        <span>🗑️</span><span style="flex:1;text-align:left">Supprimer mon compte</span>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -184,8 +221,7 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
   <button class="nb active" id="nav-home" onclick="goTab('home')"><span class="ni">🏠</span><span>Accueil</span></button>
   <button class="nb" id="nav-discover" onclick="goTab('discover')"><span class="ni">🔍</span><span>Découvrir</span></button>
   <button class="nb" id="nav-messages" onclick="goTab('messages')"><span class="ni">💬</span><span>Messages</span></button>
-  <button class="nb" id="nav-profile" onclick="goTab('profile')"><span class="ni">👤</span><span>Profil</span></button>
-  <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">⚙️</span><span>Réglages</span></button>
+  <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">👤</span><span>Moi</span></button>
 </div>
 
 <div id="modal" onclick="if(event.target===this)closeMod()">
@@ -321,7 +357,7 @@ function goTab(tab){
   if(tab==="home")renderFeed();
   else if(tab==="discover")renderDiscover();
   else if(tab==="messages")renderMessages();
-  else if(tab==="profile")renderProfile();
+  else if(tab==="settings")renderSettingsProfile();
 }
 
 // FEED
@@ -469,23 +505,75 @@ async function sendDM(uid){
 }
 
 // PROFILE
-function renderProfile(){
+function renderSettingsProfile(){
+  if(!currentUser)return;
+  var av=qs("settings-av");
+  var ini=(ME.avatar||(ME.nom||"?").slice(0,2).toUpperCase()).trim();
+  if(av)av.innerHTML=mkAv(ini,ME.couleur,ME.profile_pic,56);
+  var n=qs("settings-nom");if(n)n.textContent=ME.nom||"?";
+  var u=qs("settings-username");if(u)u.textContent=(ME.username||"")+(ME.niveau?" · "+ME.niveau:"");
+}
+async function renderProfile(){
   var el=qs("profile-content");if(!el||!currentUser)return;
+  el.innerHTML="<p style='text-align:center;padding:40px;color:rgba(255,255,255,.3)'>Chargement...</p>";
+  // Always reload fresh from Supabase
+  await loadProfile();
   var u=ME;
-  var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
+  var ini=(u.avatar||(u.nom||"?").slice(0,2).toUpperCase()).trim();
   var loc=[u.ville,u.pays].filter(Boolean).join(", ");
-  var html="<div style='text-align:center;padding:20px'>";
-  html+=mkAv(ini,u.couleur,u.profile_pic,80);
-  html+="<div style='font-family:var(--fh);font-size:20px;font-weight:900;margin:12px 0 4px'>"+(u.nom||"?")+"</div>";
-  html+="<div style='color:rgba(255,255,255,.5);font-size:13px'>"+(u.username||"")+"</div>";
-  if(u.niveau)html+="<div style='margin-top:6px;font-size:13px;color:rgba(255,255,255,.6)'>"+(u.niveau||"")+(u.etablissement?" - "+u.etablissement:"")+"</div>";
-  if(loc)html+="<div style='font-size:12px;color:rgba(255,255,255,.4);margin-top:4px'>📍 "+loc+"</div>";
-  if(u.bio)html+="<div style='margin-top:10px;font-size:14px;color:rgba(255,255,255,.7)'>"+(u.bio||"")+"</div>";
+  var html="<div style='text-align:center;padding:24px 16px'>";
+  html+=mkAv(ini,u.couleur,u.profile_pic,90);
+  html+="<div style='font-family:var(--fh);font-size:22px;font-weight:900;margin:14px 0 4px'>"+(u.nom||"?")+"</div>";
+  html+="<div style='color:rgba(255,255,255,.5);font-size:13px;margin-bottom:6px'>"+(u.username||"")+"</div>";
+  if(u.niveau||u.etablissement){
+    html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:4px'>";
+    html+=(u.niveau||"")+(u.etablissement?" · "+u.etablissement:"");
+    html+="</div>";
+  }
+  if(loc)html+="<div style='font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px'>📍 "+loc+"</div>";
+  if(u.bio)html+="<div style='font-size:14px;color:rgba(255,255,255,.7);line-height:1.5;margin-bottom:16px'>"+(u.bio||"")+"</div>";
+  html+="<button onclick='showEditProfile()' style='background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:9px 24px;color:#fff;font-size:13px;font-weight:700;cursor:pointer'>✏️ Modifier le profil</button>";
   html+="</div>";
   el.innerHTML=html;
 }
 
 // SETTINGS
+function showAccountInfo(){
+  if(!currentUser)return;
+  var html="<div style='margin-bottom:16px'>";
+  html+="<div style='font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px'>EMAIL</div>";
+  html+="<div style='font-size:14px'>"+(currentUser.email||"")+"</div></div>";
+  html+="<div style='margin-bottom:16px'>";
+  html+="<div style='font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px'>NOM</div>";
+  html+="<div style='font-size:14px'>"+(ME.nom||"")+"</div></div>";
+  html+="<div style='margin-bottom:16px'>";
+  html+="<div style='font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px'>PSEUDO</div>";
+  html+="<div style='font-size:14px'>"+(ME.username||"")+"</div></div>";
+  html+="<div style='margin-bottom:20px'>";
+  html+="<div style='font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px'>NIVEAU</div>";
+  html+="<div style='font-size:14px'>"+(ME.niveau||"")+" "+(ME.etablissement||"")+"</div></div>";
+  html+="<button class='btn-acc' onclick='showEditProfile();closeMod()'>✏️ Modifier le profil</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
+  openMod("Mon compte",html);
+}
+function showEditProfile(){
+  var html="<div class='field'><label>BIO</label><input type='text' id='edit-bio' value='"+(ME.bio||"").replace(/'/g,"")+"'></div>";
+  html+="<div class='field'><label>VILLE</label><input type='text' id='edit-ville' value='"+(ME.ville||"")+"'></div>";
+  html+="<div class='field'><label>PAYS</label><input type='text' id='edit-pays' value='"+(ME.pays||"")+"'></div>";
+  html+="<div id='edit-msg' style='display:none;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:#2ecc71'></div>";
+  html+="<button class='btn-acc' onclick='saveProfile()'>Enregistrer</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Annuler</button>";
+  openMod("Modifier le profil",html);
+}
+async function saveProfile(){
+  var bio=(qs("edit-bio")||{}).value||"";
+  var ville=(qs("edit-ville")||{}).value||"";
+  var pays=(qs("edit-pays")||{}).value||"";
+  var res=await supa.from("profiles").update({bio:bio,ville:ville,pays:pays}).eq("id",currentUser.id);
+  var m=qs("edit-msg");
+  if(m){m.style.display="block";m.textContent=res.error?"Erreur: "+res.error.message:"Profil mis a jour!";}
+  if(!res.error){await loadProfile();setTimeout(function(){closeMod();renderProfile();},1500);}
+}
 function showForgotPwd(){
   var html="<div class='field'><label>EMAIL</label><input type='email' id='reset-email' placeholder='ton@email.com'></div>";
   html+="<div id='reset-msg' style='display:none;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);border-radius:10px;padding:10px;color:#2ecc71;font-size:13px;margin-bottom:10px'></div>";
@@ -523,7 +611,7 @@ function showPrivacyPolicy(){
   html+="<p style='margin-bottom:10px'>Nous collectons ton nom, email, age, niveau, etablissement, pays et ville uniquement pour faire fonctionner l application.</p>";
   html+="<p style='margin-bottom:10px'>Tes donnees sont hebergees sur Supabase et ne sont jamais vendues.</p>";
   html+="<p style='margin-bottom:10px'>Les profils des moins de 16 ans sont prives par defaut.</p>";
-  html+="<p>Contact : mervilstevenson@gmail.com</p></div>";
+  html+="<p>Contact : stefimerv@gmail.com</p></div>";
   html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:10px'>Fermer</button>";
   openMod("Politique de confidentialite",html);
 }
@@ -533,7 +621,7 @@ function showAbout(){
   html+="<div style='font-family:var(--fh);font-size:20px;font-weight:900;margin-bottom:16px'>Etu<span style=\"color:var(--acc)\">Connect</span></div>";
   html+="</div>";
   html+="<a href='https://wa.me/50955108873?text=Bonjour%2C%20je%20voudrais%20annoncer' target='_blank' style='display:block;width:100%;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);border-radius:12px;padding:12px;color:#25d366;font-size:14px;cursor:pointer;font-weight:700;margin-bottom:8px;text-align:center;text-decoration:none'>Devenir annonceur - WhatsApp</a>";
-  html+="<a href='mailto:mervilstevenson@gmail.com' style='display:block;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px;text-align:center;text-decoration:none'>mervilstevenson@gmail.com</a>";
+  html+="<a href='mailto:stefimerv@gmail.com' style='display:block;width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px;text-align:center;text-decoration:none'>stefimerv@gmail.com</a>";
   html+="<button class='mbtn cancel' onclick='closeMod()'>Fermer</button>";
   openMod("A propos de EtuConnect",html);
 }
