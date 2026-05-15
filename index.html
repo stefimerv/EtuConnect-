@@ -899,60 +899,141 @@ async function joinGroup(gid){
 }
 
 var ROLES={president:"👑 Président",vice_president:"⭐ Vice-Président",secretaire:"📋 Secrétaire",member:"👤 Membre"};
+var currentGroupId=null;
 
 async function openGroup(gid){
+  currentGroupId=gid;
   try{
     var res=await supa.from("groups").select("*").eq("id",gid).single();
     var g=res.data;if(!g)return;
+
     var mres=await supa.from("group_members").select("*").eq("group_id",gid);
     var members=mres.data||[];
-
-    // Find current user's role
     var myMembership=members.find(function(m){return currentUser&&m.user_id===currentUser.id;});
     var myRole=myMembership?myMembership.role:null;
-    // Also check if user is the creator (created_by field)
-    if(!myRole&&currentUser&&g.created_by===currentUser.id) myRole="president";
+    if(!myRole&&currentUser&&g.created_by===currentUser.id)myRole="president";
     var isPresident=myRole==="president";
-    var isLeader=myRole==="president"||myRole==="vice_president";
     var isMember=!!myMembership||(currentUser&&g.created_by===currentUser.id);
+    var totalMembers=members.length+((!myMembership&&currentUser&&g.created_by===currentUser.id)?1:0);
 
     var typeEmoji={club:"🎯",classe:"📚",cours:"📖"};
-    var html="<div style='margin-bottom:14px'>";
-    html+="<div style='font-size:26px;margin-bottom:4px'>"+(typeEmoji[g.type]||"👥")+"</div>";
-    html+="<div style='font-family:var(--fh);font-size:18px;font-weight:900;margin-bottom:4px'>"+g.name+"</div>";
-    if(g.description)html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:8px'>"+g.description+"</div>";
-    if(myRole)html+="<div style='font-size:12px;color:var(--acc);font-weight:700'>"+( ROLES[myRole]||myRole)+"</div>";
-    html+="</div>";
 
-    var totalMembers=members.length+((!myMembership&&currentUser&&g.created_by===currentUser.id)?1:0);
-    html+="<div style='font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:10px'>MEMBRES ("+totalMembers+")</div>";
-    html+="<div style='margin-bottom:16px'>";
-    members.forEach(function(m){
-      var roleLabel=ROLES[m.role]||m.role;
-      var isMe=currentUser&&m.user_id===currentUser.id;
-      html+="<div style='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)'>";
-      html+="<div style='width:36px;height:36px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700'>"+(isMe?"Moi":"👤")+"</div>";
-      html+="<div style='flex:1'><div style='font-size:14px;font-weight:600'>"+(isMe?"Moi":"Membre")+"</div>";
-      html+="<div style='font-size:11px;color:rgba(255,255,255,.4)'>"+roleLabel+"</div></div>";
-      if(isLeader&&m.role!=="president"&&!isMe){
-        html+="<button data-mid='"+m.id+"' data-uid='"+m.user_id+"' data-gid='"+gid+"' onclick='changeRole(this)' style='background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;cursor:pointer'>Rôle</button>";
-      }
-      html+="</div>";
-    });
+    var html="";
+    // Header du groupe
+    html+="<div style='display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.08)'>";
+    html+="<div style='font-size:28px'>"+(typeEmoji[g.type]||"👥")+"</div>";
+    html+="<div style='flex:1'><div style='font-weight:900;font-size:16px'>"+g.name+"</div>";
+    html+="<div style='font-size:12px;color:rgba(255,255,255,.4)'>"+totalMembers+" membre"+(totalMembers>1?"s":"")+(myRole?" · "+(ROLES[myRole]||myRole):"")+"</div></div>";
+    // Menu 3 points
+    html+="<button id='grp-menu-btn' style='background:none;border:none;color:rgba(255,255,255,.5);font-size:20px;cursor:pointer'>⋮</button>";
     html+="</div>";
 
     if(!isMember){
-      html+="<button class='btn-acc' data-gid='"+gid+"' onclick='joinGroup(this.dataset.gid)'>Rejoindre</button>";
+      html+="<button class='btn-acc' data-gid='"+gid+"' onclick='joinGroup(this.dataset.gid)' style='margin-bottom:12px'>Rejoindre le groupe</button>";
     }
-    if(g.type==="classe"){
-      html+="<button class='mbtn' data-gid='"+gid+"' onclick='openQuizzes(this.dataset.gid)' style='margin-top:8px'>📝 Quiz de la classe</button>";
+
+    // Zone de chat du groupe
+    html+="<div id='gchat-msgs' style='min-height:200px;max-height:45vh;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:8px'>";
+    html+="<p style='text-align:center;color:rgba(255,255,255,.3);font-size:13px;padding:20px 0'>Chargement des messages...</p>";
+    html+="</div>";
+
+    if(isMember){
+      html+="<div style='display:flex;gap:8px'>";
+      html+="<input id='gmsg-inp' placeholder='Écrire dans le groupe...' style='flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px;color:#fff;outline:none' onkeydown='if(event.keyCode==13)document.getElementById(&quot;gsend-btn&quot;).click()'>";
+      html+="<button id='gsend-btn' style='background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:10px 14px;color:#fff;cursor:pointer'>&#9658;</button>";
+      html+="</div>";
     }
-    if(isPresident){
-      html+="<button data-gid='"+gid+"' data-gname='"+g.name.replace(/'/g,"")+"' onclick='confirmDeleteGroup(this.dataset.gid,this.dataset.gname)' style='width:100%;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:11px;color:#e74c3c;font-size:14px;cursor:pointer;margin-top:8px'>🗑️ Supprimer le groupe</button>";
-    }
-    html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
-    openMod(g.name,html);
+
+    openMod(g.name, html);
+    var mb=qs("grp-menu-btn");
+    if(mb)(function(g2,ip,gid2){mb.onclick=function(){showGroupMenu(gid2,ip,g2.name.replace(/'/g,""));};})(g,isPresident,gid);
+    var sb=qs("gsend-btn");
+    if(sb)(function(gid2){sb.onclick=function(){sendGroupMsg(gid2);};})(gid);
+    loadGroupMessages(gid);
   }catch(e){toast("Erreur: "+e.message);}
+}
+
+function showGroupMenu(gid, isPresident, name){
+  var html="";
+  if(isPresident){
+    html+="<button id='del-grp-btn' style='width:100%;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:12px;padding:12px;color:#e74c3c;font-size:14px;cursor:pointer;margin-bottom:8px;text-align:left'>Supprimer le groupe</button>";
+    html+="<button id='mgr-grp-btn' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px;text-align:left'>Gérer les membres</button>";
+  }
+  html+="<button id='leave-grp-btn' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px;text-align:left'>Quitter le groupe</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()'>Fermer</button>";
+  openMod("Options",html);
+  var db=qs("del-grp-btn");if(db)(function(g2,n2){db.onclick=function(){confirmDeleteGroup(g2,n2);};})(gid,name);
+  var mb2=qs("mgr-grp-btn");if(mb2)(function(g2){mb2.onclick=function(){showManageMembers(g2);};})(gid);
+  var lb=qs("leave-grp-btn");if(lb)(function(g2){lb.onclick=function(){leaveGroup(g2);};})(gid);
+}
+
+async function loadGroupMessages(gid){
+  var el=qs("gchat-msgs");if(!el)return;
+  try{
+    var res=await supa.from("group_messages").select("*").eq("group_id",gid).order("created_at",{ascending:true}).limit(50);
+    var msgs=res.data||[];
+    if(!msgs.length){
+      el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);font-size:13px;padding:20px 0'>Aucun message. Sois le premier à écrire !</p>";
+      return;
+    }
+    var html="";
+    msgs.forEach(function(m){
+      var isMe=currentUser&&m.user_id===currentUser.id;
+      html+="<div style='display:flex;justify-content:"+(isMe?"flex-end":"flex-start")+"'>";
+      html+="<div style='max-width:80%;background:"+(isMe?"linear-gradient(135deg,var(--acc),var(--acc2))":"rgba(255,255,255,.1)")+";border-radius:12px;padding:8px 12px'>";
+      if(!isMe)html+="<div style='font-size:10px;color:rgba(255,255,255,.5);margin-bottom:3px'>"+m.sender_name+"</div>";
+      html+="<div style='font-size:14px'>"+m.text+"</div>";
+      html+="<div style='font-size:10px;color:rgba(255,255,255,.3);margin-top:2px;text-align:right'>"+new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+"</div>";
+      html+="</div></div>";
+    });
+    el.innerHTML=html;
+    el.scrollTop=el.scrollHeight;
+  }catch(e){
+    el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);font-size:13px;padding:20px 0'>Erreur de chargement.</p>";
+  }
+}
+
+async function sendGroupMsg(gid){
+  var inp=qs("gmsg-inp");
+  var txt=(inp?inp.value:"").trim();
+  if(!txt||!currentUser)return;
+  inp.value="";
+  var senderName=ME.nom||currentUser.email||"Anonyme";
+  var res=await supa.from("group_messages").insert({group_id:gid,user_id:currentUser.id,text:txt,sender_name:senderName});
+  if(res.error){toast("Erreur: "+res.error.message);return;}
+  loadGroupMessages(gid);
+}
+
+async function leaveGroup(gid){
+  if(!currentUser)return;
+  await supa.from("group_members").delete().eq("group_id",gid).eq("user_id",currentUser.id);
+  closeMod();
+  toast("Tu as quitté le groupe.");
+  renderGroups();
+}
+
+async function showManageMembers(gid){
+  var mres=await supa.from("group_members").select("*").eq("group_id",gid);
+  var members=mres.data||[];
+  var html="";
+  members.forEach(function(m){
+    var roleLabel=ROLES[m.role]||m.role;
+    html+="<div style='display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06)'>";
+    html+="<div style='flex:1'><div style='font-size:13px'>"+roleLabel+"</div></div>";
+    if(m.role!=="president"){
+      html+="<button data-mid='"+m.id+"' onclick='changeRole(this)' style='background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;cursor:pointer;margin-right:4px'>Rôle</button>";
+      html+="<button data-uid='"+m.user_id+"' data-gid='"+gid+"' onclick='removeMember(this.dataset.uid,this.dataset.gid)' style='background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:5px 10px;color:#e74c3c;font-size:11px;cursor:pointer'>Retirer</button>";
+    }
+    html+="</div>";
+  });
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:10px'>Fermer</button>";
+  openMod("Gérer les membres",html);
+}
+
+async function removeMember(uid,gid){
+  await supa.from("group_members").delete().eq("user_id",uid).eq("group_id",gid);
+  toast("Membre retiré.");
+  showManageMembers(gid);
 }
 
 function changeRole(btn){
