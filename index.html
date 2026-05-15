@@ -1190,57 +1190,44 @@ async function renderEvents(){
 }
 
 function showCreateEvent(){
-  var now=new Date();
-  var dateStr=now.toISOString().slice(0,16);
-
-  // Build form using DOM elements
-  var box=document.createElement("div");
-
-  var f1=document.createElement("div");f1.className="field";
-  f1.innerHTML="<label>TITRE</label><input type='text' id='ev-title' placeholder='Ex: Tournoi de foot...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'>";
-  box.appendChild(f1);
-
-  var f2=document.createElement("div");f2.className="field";
-  f2.innerHTML="<label>DATE ET HEURE</label><input type='datetime-local' id='ev-date' value='"+dateStr+"' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none;color-scheme:dark'>";
-  box.appendChild(f2);
-
-  var f3=document.createElement("div");f3.className="field";
-  f3.innerHTML="<label>LIEU (optionnel)</label><input type='text' id='ev-loc' placeholder='Ex: Auditorium...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'>";
-  box.appendChild(f3);
-
-  var f4=document.createElement("div");f4.className="field";
-  f4.innerHTML="<label>DESCRIPTION</label><input type='text' id='ev-desc' placeholder='Détails...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'>";
-  box.appendChild(f4);
-
-  var btnCreate=document.createElement("button");
-  btnCreate.className="btn-acc";
-  btnCreate.textContent="Créer l'événement";
-  btnCreate.style.marginTop="8px";
-  btnCreate.addEventListener("click", function(){ createEvent(); });
-  box.appendChild(btnCreate);
-
-  var btnCancel=document.createElement("button");
-  btnCancel.className="mbtn cancel";
-  btnCancel.textContent="Annuler";
-  btnCancel.style.marginTop="8px";
-  btnCancel.addEventListener("click", function(){ closeMod(); });
-  box.appendChild(btnCancel);
-
-  // Use openMod with empty content then append
-  openMod("Nouvel événement","");
-  var mc=qs("modal-content");
-  if(mc){mc.innerHTML="";mc.appendChild(box);}
+  var overlay=qs("event-form-overlay");
+  if(!overlay){
+    overlay=document.createElement("div");
+    overlay.id="event-form-overlay";
+    overlay.style.cssText="position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29,#302b63);z-index:300;overflow-y:auto;padding:20px";
+    overlay.innerHTML=""
+      +"<div style='display:flex;align-items:center;gap:12px;margin-bottom:24px'>"
+      +"<button id='ev-back' style='background:none;border:none;color:#fff;font-size:22px;cursor:pointer'>←</button>"
+      +"<h2 style='font-family:var(--fh);font-size:18px'>Nouvel événement</h2></div>"
+      +"<div class='field' style='margin-bottom:14px'><label style='display:block;color:rgba(255,255,255,.5);font-size:11px;margin-bottom:5px;letter-spacing:1px'>TITRE</label>"
+      +"<input type='text' id='ev-title' placeholder='Ex: Tournoi de foot...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'></div>"
+      +"<div class='field' style='margin-bottom:14px'><label style='display:block;color:rgba(255,255,255,.5);font-size:11px;margin-bottom:5px;letter-spacing:1px'>DATE ET HEURE</label>"
+      +"<input type='datetime-local' id='ev-date' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none;color-scheme:dark'></div>"
+      +"<div class='field' style='margin-bottom:14px'><label style='display:block;color:rgba(255,255,255,.5);font-size:11px;margin-bottom:5px;letter-spacing:1px'>LIEU (optionnel)</label>"
+      +"<input type='text' id='ev-loc' placeholder='Ex: Auditorium...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'></div>"
+      +"<div class='field' style='margin-bottom:20px'><label style='display:block;color:rgba(255,255,255,.5);font-size:11px;margin-bottom:5px;letter-spacing:1px'>DESCRIPTION</label>"
+      +"<input type='text' id='ev-desc' placeholder='Détails...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;outline:none'></div>"
+      +"<button id='ev-submit' style='width:100%;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:12px;padding:14px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px'>Créer l événement</button>"
+      +"<div id='ev-msg' style='display:none;padding:10px;border-radius:10px;font-size:13px;text-align:center'></div>";
+    document.body.appendChild(overlay);
+    qs("ev-back").addEventListener("click",function(){overlay.style.display="none";});
+    qs("ev-submit").addEventListener("click",function(){createEvent();});
+  }
+  // Reset form
+  qs("ev-title").value="";
+  qs("ev-date").value=new Date().toISOString().slice(0,16);
+  qs("ev-loc").value="";
+  qs("ev-desc").value="";
+  var m=qs("ev-msg");if(m)m.style.display="none";
+  overlay.style.display="block";
 }
 
 
 async function createEvent(){
-  // Immediate feedback
-  toast("Bouton cliqué !");
   var title=(qs("ev-title")||{}).value||"";
   var date=(qs("ev-date")||{}).value||"";
   var loc=(qs("ev-loc")||{}).value||"";
   var desc=(qs("ev-desc")||{}).value||"";
-  toast("user: "+(currentUser?currentUser.email:"NON CONNECTÉ"));
   if(!title){toast("Entre un titre.");return;}
   if(!currentUser){toast("Connecte-toi d'abord.");return;}
   // Parse date - handle both ISO and local formats
@@ -1266,7 +1253,7 @@ async function createEvent(){
     if(res.error){toast("Erreur events: "+res.error.message+" code:"+res.error.code);return;}
     if(!res.data){toast("Erreur: pas de données retournées");return;}
     await supa.from("event_attendees").insert({event_id:res.data.id,user_id:currentUser.id});
-    closeMod();
+    var ov=qs('event-form-overlay');if(ov)ov.style.display='none';
     toast("✅ Événement créé !");
     renderEvents();
   }catch(e){toast("Exception: "+e.message);}
