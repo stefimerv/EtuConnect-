@@ -949,11 +949,56 @@ async function openGroup(gid){
       html+="</div>";
     }
 
-    openMod(g.name, html);
-    var mb=qs("grp-menu-btn");
-    if(mb)(function(g2,ip,gid2){mb.onclick=function(){showGroupMenu(gid2,ip,g2.name.replace(/'/g,""));};})(g,isPresident,gid);
+    // Show full-page group view
+    var gp=qs("group-page");
+    if(!gp){
+      gp=document.createElement("div");
+      gp.id="group-page";
+      gp.style.cssText="position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29,#302b63);z-index:200;display:flex;flex-direction:column";
+      document.body.appendChild(gp);
+    }
+    var typeEmoji2={club:"🎯",classe:"📚",cours:"📖"};
+    gp.innerHTML="";
+    // Top bar
+    var topbar=document.createElement("div");
+    topbar.style.cssText="background:rgba(15,12,41,.95);padding:12px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0";
+    topbar.innerHTML="<button onclick='closeGroupPage()' style='background:none;border:none;color:#fff;font-size:20px;cursor:pointer'>←</button>"
+      +"<div style='width:40px;height:40px;border-radius:50%;background:rgba(233,30,140,.2);display:flex;align-items:center;justify-content:center;font-size:18px'>"+(typeEmoji2[g.type]||"👥")+"</div>"
+      +"<div style='flex:1'><div style='font-weight:700;font-size:15px'>"+g.name+"</div>"
+      +"<div style='font-size:12px;color:rgba(255,255,255,.4)'>"+totalMembers+" membre"+(totalMembers>1?"s":"")+"</div></div>"
+      +"<button id='grp-menu-btn2' style='background:none;border:none;color:rgba(255,255,255,.6);font-size:22px;cursor:pointer'>⋮</button>";
+    gp.appendChild(topbar);
+    // Messages area
+    var msgs=document.createElement("div");
+    msgs.id="gchat-msgs";
+    msgs.style.cssText="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px";
+    msgs.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);font-size:13px;padding:20px 0'>Chargement...</p>";
+    gp.appendChild(msgs);
+    // Input bar
+    if(isMember){
+      var bar=document.createElement("div");
+      bar.style.cssText="padding:10px 12px;background:rgba(15,12,41,.95);border-top:1px solid rgba(255,255,255,.08);display:flex;gap:8px;flex-shrink:0";
+      var inp=document.createElement("input");
+      inp.id="gmsg-inp";
+      inp.placeholder="Message...";
+      inp.style.cssText="flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:10px 16px;color:#fff;outline:none;font-size:14px";
+      var sendbtn=document.createElement("button");
+      sendbtn.id="gsend-btn";
+      sendbtn.innerHTML="&#9658;";
+      sendbtn.style.cssText="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:50%;width:40px;height:40px;color:#fff;font-size:16px;cursor:pointer;flex-shrink:0";
+      bar.appendChild(inp);
+      bar.appendChild(sendbtn);
+      gp.appendChild(bar);
+    }
+    gp.style.display="flex";
+    // Set onclicks
+    var mb2=qs("grp-menu-btn2");
+    if(mb2)(function(g2,ip,gid2){mb2.onclick=function(){showGroupMenu(gid2,ip,g2.name.replace(/'/g,""));};})(g,isPresident,gid);
     var sb=qs("gsend-btn");
-    if(sb)(function(gid2){sb.onclick=function(){sendGroupMsg(gid2);};})(gid);
+    if(sb)(function(gid2){
+      sb.onclick=function(){sendGroupMsg(gid2);};
+      qs("gmsg-inp").onkeydown=function(e){if(e.keyCode===13)sendGroupMsg(gid2);};
+    })(gid);
     loadGroupMessages(gid);
   }catch(e){toast("Erreur: "+e.message);}
 }
@@ -1009,10 +1054,14 @@ async function sendGroupMsg(gid){
   loadGroupMessages(gid);
 }
 
+function closeGroupPage(){
+  var gp=qs("group-page");
+  if(gp)gp.style.display="none";
+}
 async function leaveGroup(gid){
   if(!currentUser)return;
   await supa.from("group_members").delete().eq("group_id",gid).eq("user_id",currentUser.id);
-  closeMod();
+  closeGroupPage();closeMod();
   toast("Tu as quitté le groupe.");
   renderGroups();
 }
@@ -1074,7 +1123,7 @@ async function deleteGroup(gid){
     if(r1.error){toast("Erreur membres: "+r1.error.message);return;}
     var r2=await supa.from("groups").delete().eq("id",gid);
     if(r2.error){toast("Erreur groupe: "+r2.error.message);return;}
-    closeMod();
+    closeGroupPage();closeMod();
     toast("Groupe supprimé ✅");
     await renderGroups();
   }catch(e){toast("Erreur: "+e.message);}
