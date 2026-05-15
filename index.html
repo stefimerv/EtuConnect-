@@ -855,6 +855,9 @@ async function openGroup(gid){
     });
     html+="</div>";
     html+="<button class='btn-acc' data-gid='"+gid+"' onclick='joinGroup(this.dataset.gid)'>Rejoindre</button>";
+    if(g.type==="classe"){
+      html+="<button class='mbtn' data-gid='"+gid+"' onclick='openQuizzes(this.dataset.gid)' style='margin-top:8px'>📝 Quiz de la classe</button>";
+    }
     html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
     openMod(g.name,html);
   }catch(e){toast("Erreur: "+e.message);}
@@ -958,6 +961,160 @@ async function attendEvent(eid,btn){
     btn.disabled=true;
     toast("Tu es inscrit à l événement !");
   }catch(e){toast("Déjà inscrit ou erreur.");}
+}
+
+// QUIZ
+async function openQuizzes(gid){
+  var res=await supa.from("quizzes").select("*").eq("group_id",gid).order("created_at",{ascending:false});
+  var quizzes=res.data||[];
+  var html="<button onclick='showCreateQuiz(\'"+gid+"\')' style='width:100%;background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:12px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:16px'>+ Créer un quiz</button>";
+  if(!quizzes.length){
+    html+="<p style='text-align:center;color:rgba(255,255,255,.3);padding:20px'>Aucun quiz encore.</p>";
+  } else {
+    quizzes.forEach(function(q){
+      html+="<div class='card' style='cursor:pointer' data-qid='"+q.id+"' onclick='startQuiz(this.dataset.qid)'>";
+      html+="<div style='font-weight:700;margin-bottom:4px'>📝 "+q.title+"</div>";
+      html+="<div style='font-size:12px;color:rgba(255,255,255,.4)'>"+q.question_count+" question"+(q.question_count>1?"s":"")+"</div>";
+      html+="</div>";
+    });
+  }
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
+  openMod("📝 Quiz",html);
+}
+
+var currentQuiz={gid:null,questions:[],currentQ:0,score:0};
+
+function showCreateQuiz(gid){
+  currentQuiz={gid:gid,questions:[],currentQ:0,score:0};
+  var html="<div class='field'><label>TITRE DU QUIZ</label><input type='text' id='quiz-title' placeholder='Ex: Chapitre 3 - Photosynthèse'></div>";
+  html+="<div id='quiz-questions-list'></div>";
+  html+="<button onclick='addQuizQuestion()' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px;color:#fff;font-size:13px;cursor:pointer;margin-bottom:12px'>+ Ajouter une question</button>";
+  html+="<div id='quiz-msg' style='display:none;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px'></div>";
+  html+="<button class='btn-acc' onclick='saveQuiz()'>Publier le quiz</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Annuler</button>";
+  openMod("Créer un quiz",html);
+  addQuizQuestion();
+}
+
+var quizQCount=0;
+function addQuizQuestion(){
+  quizQCount++;
+  var n=quizQCount;
+  var el=qs("quiz-questions-list");
+  if(!el)return;
+  var div=document.createElement("div");
+  div.style.cssText="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;margin-bottom:10px";
+  div.innerHTML="<div style='font-size:11px;color:rgba(255,255,255,.4);margin-bottom:8px;letter-spacing:1px'>QUESTION "+n+"</div>"
+    +"<input type='text' id='qq-"+n+"' placeholder='Ta question...' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px;color:#fff;font-size:13px;outline:none;margin-bottom:8px'>"
+    +"<div style='display:grid;grid-template-columns:1fr 1fr;gap:6px'>"
+    +"<input type='text' id='qa-"+n+"-0' placeholder='A) Réponse 1' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px;color:#fff;font-size:12px;outline:none'>"
+    +"<input type='text' id='qa-"+n+"-1' placeholder='B) Réponse 2' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px;color:#fff;font-size:12px;outline:none'>"
+    +"<input type='text' id='qa-"+n+"-2' placeholder='C) Réponse 3' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px;color:#fff;font-size:12px;outline:none'>"
+    +"<input type='text' id='qa-"+n+"-3' placeholder='D) Réponse 4' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px;color:#fff;font-size:12px;outline:none'>"
+    +"</div>"
+    +"<div style='margin-top:8px'><label style='font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px'>BONNE RÉPONSE</label>"
+    +"<select id='qc-"+n+"' style='width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px;color:#fff;margin-top:4px;outline:none'>"
+    +"<option value='0'>A</option><option value='1'>B</option><option value='2'>C</option><option value='3'>D</option>"
+    +"</select></div>";
+  el.appendChild(div);
+}
+
+async function saveQuiz(){
+  var title=(qs("quiz-title")||{}).value||"";
+  var m=qs("quiz-msg");
+  if(!title){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Entre un titre.";}return;}
+  if(!currentUser)return;
+  var questions=[];
+  for(var i=1;i<=quizQCount;i++){
+    var q=(qs("qq-"+i)||{}).value||"";
+    if(!q)continue;
+    var answers=[];
+    for(var j=0;j<4;j++) answers.push((qs("qa-"+i+"-"+j)||{}).value||"");
+    var correct=parseInt((qs("qc-"+i)||{}).value||"0");
+    questions.push({question:q,answers:answers,correct:correct});
+  }
+  if(!questions.length){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Ajoute au moins une question.";}return;}
+  try{
+    await supa.from("quizzes").insert({group_id:currentQuiz.gid,title:title,questions:questions,question_count:questions.length,created_by:currentUser.id});
+    closeMod();
+    toast("Quiz publié !");
+  }catch(e){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Erreur: "+e.message;}}
+}
+
+async function startQuiz(qid){
+  var res=await supa.from("quizzes").select("*").eq("id",qid).single();
+  if(res.error||!res.data)return;
+  var q=res.data;
+  currentQuiz={gid:q.group_id,questions:q.questions,currentQ:0,score:0,id:qid};
+  showQuizQuestion();
+}
+
+function showQuizQuestion(){
+  var q=currentQuiz.questions[currentQuiz.currentQ];
+  var total=currentQuiz.questions.length;
+  var num=currentQuiz.currentQ+1;
+  if(!q){showQuizResult();return;}
+  var progress=Math.round((currentQuiz.currentQ/total)*100);
+  var html="<div style='margin-bottom:16px'>";
+  html+="<div style='display:flex;justify-content:space-between;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px'><span>Question "+num+"/"+total+"</span><span>Score: "+currentQuiz.score+"</span></div>";
+  html+="<div style='height:4px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden'><div style='height:100%;width:"+progress+"%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:99px'></div></div>";
+  html+="</div>";
+  html+="<div style='font-size:16px;font-weight:700;margin-bottom:20px;line-height:1.4'>"+q.question+"</div>";
+  html+="<div style='display:grid;gap:10px'>";
+  var letters=["A","B","C","D"];
+  q.answers.forEach(function(ans,i){
+    if(!ans)return;
+    html+="<button data-idx='"+i+"' onclick='answerQuiz("+i+")' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 14px;color:#fff;font-size:14px;text-align:left;cursor:pointer;display:flex;gap:10px;align-items:center'>";
+    html+="<span style='background:rgba(233,30,140,.2);border:1px solid rgba(233,30,140,.3);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;color:var(--acc)'>"+letters[i]+"</span>";
+    html+=ans+"</button>";
+  });
+  html+="</div>";
+  openMod("📝 Quiz",html);
+}
+
+function answerQuiz(idx){
+  var q=currentQuiz.questions[currentQuiz.currentQ];
+  var correct=q.correct;
+  var isRight=idx===correct;
+  if(isRight)currentQuiz.score++;
+  // Show feedback
+  var btns=document.querySelectorAll("#modal-content button[data-idx]");
+  btns.forEach(function(btn){
+    var i=parseInt(btn.dataset.idx);
+    btn.disabled=true;
+    if(i===correct) btn.style.cssText=btn.style.cssText+"background:rgba(46,204,113,.2);border-color:rgba(46,204,113,.5);color:#2ecc71";
+    else if(i===idx) btn.style.cssText=btn.style.cssText+"background:rgba(231,76,60,.2);border-color:rgba(231,76,60,.5);color:#e74c3c";
+  });
+  // Add next button
+  var next=document.createElement("button");
+  next.className="btn-acc";
+  next.style.marginTop="16px";
+  next.textContent=currentQuiz.currentQ+1<currentQuiz.questions.length?"Question suivante →":"Voir le résultat";
+  next.onclick=function(){
+    currentQuiz.currentQ++;
+    showQuizQuestion();
+  };
+  qs("modal-content").appendChild(next);
+}
+
+function showQuizResult(){
+  var total=currentQuiz.questions.length;
+  var score=currentQuiz.score;
+  var pct=Math.round((score/total)*100);
+  var emoji=pct>=80?"🏆":pct>=60?"👍":pct>=40?"😅":"📚";
+  var msg=pct>=80?"Excellent !":pct>=60?"Bien joué !":pct>=40?"Pas mal, continue !":"Révise encore !";
+  var html="<div style='text-align:center;padding:10px 0'>";
+  html+="<div style='font-size:56px;margin-bottom:8px'>"+emoji+"</div>";
+  html+="<div style='font-family:var(--fh);font-size:32px;font-weight:900;color:var(--acc);margin-bottom:4px'>"+score+"/"+total+"</div>";
+  html+="<div style='font-size:14px;color:rgba(255,255,255,.6);margin-bottom:16px'>"+msg+"</div>";
+  html+="<div style='height:8px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin-bottom:20px'>";
+  html+="<div style='height:100%;width:"+pct+"%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:99px;transition:width .5s'></div></div>";
+  html+="</div>";
+  html+="<button class='btn-acc' id='restart-quiz-btn'>Recommencer</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
+  openMod("Résultat",html);
+  var rb=qs("restart-quiz-btn");
+  if(rb)rb.onclick=function(){startQuiz(currentQuiz.id);};
 }
 
 // COUNTDOWN
