@@ -11,7 +11,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--acc:#e91e8c;--acc2:#c2185b;--fh:'Arial Black',sans-serif;--fb:Arial,sans-serif}
-body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:#fff;font-family:var(--fb);overflow-x:hidden}
+body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh;color:#fff;font-family:var(--fb);overflow-x:hidden;display:block}
 #splash{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;gap:20px}
 .sscene{position:relative;width:260px;height:260px}
 .sorbit{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(233,30,140,.4)}
@@ -51,11 +51,11 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
 .alink{text-align:center;margin-top:10px;color:rgba(255,255,255,.4);font-size:13px;cursor:pointer}
 .alink span{color:var(--acc)}
 .step-hint{text-align:center;color:rgba(255,255,255,.4);font-size:12px;margin-bottom:16px}
-#main{display:none;min-height:100vh;padding-bottom:70px}
+#main{display:none;padding-bottom:70px;overflow-y:auto;height:calc(100vh - 50px)}
 #topbar{position:sticky;top:0;background:rgba(15,12,41,.95);backdrop-filter:blur(10px);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:100;border-bottom:1px solid rgba(255,255,255,.08)}
 .topbar-logo{font-family:var(--fh);font-size:18px;font-weight:900}
 .topbar-logo span{color:var(--acc)}
-.tab{display:none;padding:12px;padding-top:8px}
+.tab{display:none;padding:12px}
 .tab.active{display:block}
 #bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,12,41,.95);backdrop-filter:blur(10px);border-top:1px solid rgba(255,255,255,.08);display:flex;z-index:100}
 .nb{flex:1;background:none;border:none;color:rgba(255,255,255,.4);padding:10px 0;cursor:pointer;font-size:10px;display:flex;flex-direction:column;align-items:center;gap:3px}
@@ -247,7 +247,7 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
   <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">👤</span><span>Moi</span></button>
 </div>
 
-<div id="tab-groups" class="tab">
+<div id="tab-groups" class="tab" style="min-height:unset">
   <!-- Sub tabs + create button on same row -->
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
     <div style="display:flex;background:rgba(255,255,255,.08);border-radius:12px;padding:3px;flex:1">
@@ -410,7 +410,7 @@ function goTab(tab){
   var pg=qs("tab-"+tab);if(pg)pg.classList.add("active");
   document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("active");});
   var nb=qs("nav-"+tab);if(nb)nb.classList.add("active");
-  window.scrollTo(0,0);
+  window.scrollTo(0,0);document.getElementById("main").scrollTop=0;
   if(tab==="home"){renderFeed();renderStories();}
   else if(tab==="discover")renderDiscover();
   else if(tab==="messages")renderMessages();
