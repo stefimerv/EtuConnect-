@@ -1225,14 +1225,15 @@ async function createEvent(){
     if(!eventDate)eventDate=new Date(Date.now()+3600000).toISOString();
   }catch(e){eventDate=new Date(Date.now()+3600000).toISOString();}
   try{
+    toast("Création en cours...");
     var res=await supa.from("events").insert({title:title,event_date:eventDate,location:loc||null,description:desc||null,created_by:currentUser.id}).select().single();
-    if(res.error){toast("Erreur: "+res.error.message);return;}
-    // Auto-attend
+    if(res.error){toast("Erreur events: "+res.error.message+" code:"+res.error.code);return;}
+    if(!res.data){toast("Erreur: pas de données retournées");return;}
     await supa.from("event_attendees").insert({event_id:res.data.id,user_id:currentUser.id});
     closeMod();
-    toast("Événement créé !");
+    toast("✅ Événement créé !");
     renderEvents();
-  }catch(e){toast("Erreur: "+e.message);}
+  }catch(e){toast("Exception: "+e.message);}
 }
 
 async function attendEvent(eid,btn){
