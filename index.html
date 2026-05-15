@@ -1234,10 +1234,13 @@ function showCreateEvent(){
 
 
 async function createEvent(){
+  // Immediate feedback
+  toast("Bouton cliqué !");
   var title=(qs("ev-title")||{}).value||"";
   var date=(qs("ev-date")||{}).value||"";
   var loc=(qs("ev-loc")||{}).value||"";
   var desc=(qs("ev-desc")||{}).value||"";
+  toast("user: "+(currentUser?currentUser.email:"NON CONNECTÉ"));
   if(!title){toast("Entre un titre.");return;}
   if(!currentUser){toast("Connecte-toi d'abord.");return;}
   // Parse date - handle both ISO and local formats
