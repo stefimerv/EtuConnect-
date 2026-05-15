@@ -56,7 +56,7 @@ body.f-nunito{--fb:'Nunito',sans-serif;--fh:'Nunito',sans-serif}
 .sscene{position:relative;width:260px;height:260px;margin-bottom:20px}
 .sorbit{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(233,30,140,.2);animation:rpulse 3s ease-in-out infinite}
 @keyframes rpulse{0%,100%{box-shadow:0 0 0 0 rgba(233,30,140,0)}50%{box-shadow:0 0 0 8px rgba(233,30,140,.06)}}
-.snode{position:absolute;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(0);background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.56,.64,1)}
+.snode{opacity:1;position:absolute;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:1;transform:scale(1);background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.12);transition:opacity .4s ease,transform .5s cubic-bezier(.34,1.56,.64,1)}
 .snode.pop{animation:spop .55s cubic-bezier(.34,1.56,.64,1) forwards}
 .snode.stay{opacity:1;transform:scale(1);animation:none}
 @keyframes spop{0%{opacity:0;transform:scale(.3) rotate(-15deg)}70%{opacity:1;transform:scale(1.1) rotate(4deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
@@ -69,13 +69,13 @@ body.f-nunito{--fb:'Nunito',sans-serif;--fh:'Nunito',sans-serif}
 .sline{stroke:rgba(233,30,140,.22);stroke-width:1;stroke-dasharray:5 4;opacity:1}
 .sline.show{opacity:1;animation:sdash 2s linear infinite}
 @keyframes sdash{to{stroke-dashoffset:-36}}
-.scenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;transition:opacity .6s ease}
+.scenter{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;opacity:1;transition:opacity .6s ease}
 .scenter.show{opacity:1}
 .scc{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--bg2));display:flex;align-items:center;justify-content:center;margin:0 auto 6px;box-shadow:0 0 24px rgba(233,30,140,.4);font-size:26px}
 .scname{font-family:var(--fh);font-weight:800;font-size:18px}.scname span{color:var(--acc)}
-.stag{text-align:center;opacity:0;margin-bottom:22px;transition:opacity .6s ease}
+.stag{text-align:center;opacity:1;margin-bottom:22px;transition:opacity .6s ease}
 .stag p{color:rgba(255,255,255,.38);font-size:11px;letter-spacing:.8px;text-transform:uppercase}
-.sbtns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;opacity:0;transition:opacity .5s ease}
+.sbtns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px;opacity:1;transition:opacity .5s ease}
 .sbtn{border:none;border-radius:14px;padding:15px 0;color:#fff;font-family:var(--fh);font-weight:700;font-size:16px;cursor:pointer;width:100%}
 .sbtn.main{background:linear-gradient(135deg,var(--acc),var(--acc2))}.sbtn.sec{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
 .particle{position:fixed;border-radius:50%;background:rgba(233,30,140,.12);animation:pfloat linear infinite;pointer-events:none;z-index:0}
@@ -801,49 +801,16 @@ const levelColor=(niv)=>({"6e":"#60a5fa","5e":"#60a5fa","4e":"#34d399","3e":"#34
 
 // ── SPLASH ────────────────────────────────────────────
 function splashAnim(){
-  // Particles
   try{
-    const pb=document.getElementById("pbg");
-    if(pb&&!pb.hasChildNodes()){
-      for(let i=0;i<12;i++){
-        const p=document.createElement("div");p.className="particle";
-        const s=Math.random()*5+3;
-        p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}vw;top:${50+Math.random()*50}vh;animation-duration:${5+Math.random()*5}s;animation-delay:${Math.random()*4}s`;
-        pb.appendChild(p);
-      }
-    }
-  }catch(e){}
-
-  function show(id){
-    const n=document.getElementById(id);
-    if(!n)return;
-    n.style.opacity="1";
-    n.style.transform="scale(1)";
-  }
-  function showClass(id){
-    const n=document.getElementById(id);
-    if(!n)return;
-    n.style.opacity="1";
-  }
-  function showLines(...ids){
-    ids.forEach(id=>{
-      const n=document.getElementById(id);
-      if(n)n.style.opacity="0.6";
+    // Show all elements immediately with a simple fade
+    const ids=["sn1","sn2","sn3","sn4","scenter","stag","sbtns","sl1","sl2","sl3","sl4"];
+    ids.forEach((id,i)=>{
+      setTimeout(()=>{
+        const el=document.getElementById(id);
+        if(el){el.style.opacity="1";el.style.transform="scale(1)";}
+      }, i*200);
     });
-  }
-
-  // Sequential animation
-  setTimeout(()=>show("sn1"), 300);
-  setTimeout(()=>show("sn2"), 700);
-  setTimeout(()=>show("sn3"), 1100);
-  setTimeout(()=>show("sn4"), 1500);
-  setTimeout(()=>{
-    showLines("sl1","sl2","sl3","sl4");
-    showClass("scenter");
-    const n4=document.getElementById("sn4");if(n4)n4.classList.add("lit");
-  }, 1900);
-  setTimeout(()=>showClass("stag"), 2300);
-  setTimeout(()=>showClass("sbtns"), 2700);
+  }catch(e){}
 }
 
 // ── AUTH NAV ──────────────────────────────────────────
