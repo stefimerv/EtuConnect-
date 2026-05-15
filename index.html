@@ -1205,13 +1205,28 @@ async function createEvent(){
   var date=(qs("ev-date")||{}).value||"";
   var loc=(qs("ev-loc")||{}).value||"";
   var desc=(qs("ev-desc")||{}).value||"";
-  var m=qs("ev-msg");
-  if(!title){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Entre un titre.";}return;}
-  if(!date){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Choisis une date.";}return;}
-  if(!currentUser)return;
+  if(!title){toast("Entre un titre.");return;}
+  if(!currentUser){toast("Connecte-toi d'abord.");return;}
+  // Parse date - handle both ISO and local formats
+  var eventDate=null;
   try{
-    var res=await supa.from("events").insert({title:title,event_date:new Date(date).toISOString(),location:loc||null,description:desc||null,created_by:currentUser.id}).select().single();
-    if(res.error){if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent=res.error.message;}return;}
+    if(date){
+      // Try direct parse first
+      var d=new Date(date);
+      if(isNaN(d.getTime())){
+        // Try DD/MM/YYYY HH:MM format
+        var parts=date.replace(" ","T").split(/[\/\-T:]/);
+        if(parts.length>=3){
+          d=new Date(parts[2]+"-"+parts[1]+"-"+parts[0]+(parts[3]?("T"+parts[3]+":"+(parts[4]||"00")):""));
+        }
+      }
+      if(!isNaN(d.getTime()))eventDate=d.toISOString();
+    }
+    if(!eventDate)eventDate=new Date(Date.now()+3600000).toISOString();
+  }catch(e){eventDate=new Date(Date.now()+3600000).toISOString();}
+  try{
+    var res=await supa.from("events").insert({title:title,event_date:eventDate,location:loc||null,description:desc||null,created_by:currentUser.id}).select().single();
+    if(res.error){toast("Erreur: "+res.error.message);return;}
     // Auto-attend
     await supa.from("event_attendees").insert({event_id:res.data.id,user_id:currentUser.id});
     closeMod();
