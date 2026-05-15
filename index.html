@@ -887,12 +887,18 @@ async function createGroup(){
 }
 
 async function joinGroup(gid){
-  if(!currentUser)return;
+  if(!currentUser){toast("Connecte-toi d'abord.");return;}
   try{
-    await supa.from("group_members").insert({group_id:gid,user_id:currentUser.id,role:"member"});
-    toast("Tu as rejoint le groupe !");
-    renderGroups();
-  }catch(e){toast("Déjà membre ou erreur.");}
+    var res=await supa.from("group_members").insert({group_id:gid,user_id:currentUser.id,role:"member"});
+    if(res.error){
+      if(res.error.code==="23505"){toast("Tu es déjà membre !");}
+      else{toast("Erreur: "+res.error.message);}
+      return;
+    }
+    toast("✅ Tu as rejoint le groupe !");
+    closeMod();
+    await renderGroups();
+  }catch(e){toast("Erreur: "+e.message);}
 }
 
 var ROLES={president:"👑 Président",vice_president:"⭐ Vice-Président",secretaire:"📋 Secrétaire",member:"👤 Membre"};
@@ -980,11 +986,13 @@ function confirmDeleteGroup(gid,name){
 
 async function deleteGroup(gid){
   try{
-    await supa.from("group_members").delete().eq("group_id",gid);
-    await supa.from("groups").delete().eq("id",gid);
+    var r1=await supa.from("group_members").delete().eq("group_id",gid);
+    if(r1.error){toast("Erreur membres: "+r1.error.message);return;}
+    var r2=await supa.from("groups").delete().eq("id",gid);
+    if(r2.error){toast("Erreur groupe: "+r2.error.message);return;}
     closeMod();
-    toast("Groupe supprimé.");
-    renderGroups();
+    toast("Groupe supprimé ✅");
+    await renderGroups();
   }catch(e){toast("Erreur: "+e.message);}
 }
 
