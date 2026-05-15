@@ -663,7 +663,7 @@ async function renderFeed(){
   var el=qs("feed");if(!el)return;
   el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
   try{
-    var res=await supa.from("posts").select("*,profiles(*)").order("created_at",{ascending:false}).limit(20);
+    var res=await supa.from("posts").select("*").order("created_at",{ascending:false}).limit(20);
     if(!res.data||!res.data.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucune publication.</p>";return;}
     var html="";
     res.data.forEach(function(p){
@@ -1182,6 +1182,7 @@ async function renderEvents(){
       html+="<span style='font-size:12px;color:rgba(255,255,255,.4)'>👥 "+attendees+" participant"+(attendees>1?"s":"")+"</span>";
       if(!isPast)html+="<button data-eid='"+ev.id+"' onclick='attendEvent(this.dataset.eid,this)' style='background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:8px;padding:6px 14px;color:#fff;font-size:12px;font-weight:700;cursor:pointer'>Participer</button>";
       if(!isPast)html+="<button data-edate='"+ev.event_date+"' data-etitle='"+ev.title.replace(/'/g,"")+"' onclick='showCountdown(this.dataset.edate,this.dataset.etitle)' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 10px;color:#fff;font-size:12px;cursor:pointer'>⏱</button>";
+      if(currentUser&&ev.created_by===currentUser.id)html+="<button data-eid='"+ev.id+"' onclick='deleteEvent(this.dataset.eid)' style='background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:6px 10px;color:#e74c3c;font-size:12px;cursor:pointer'>🗑️</button>";
       html+="</div></div></div></div>";
     });
     el.innerHTML=html;
@@ -1260,6 +1261,15 @@ async function createEvent(){
   }catch(e){toast("Exception: "+e.message);}
 }
 
+async function deleteEvent(eid){
+  if(!currentUser)return;
+  if(!confirm("Supprimer cet événement ?"))return;
+  var r1=await supa.from("event_attendees").delete().eq("event_id",eid);
+  var r2=await supa.from("events").delete().eq("id",eid);
+  if(r2.error){toast("Erreur: "+r2.error.message);return;}
+  toast("Événement supprimé.");
+  renderEvents();
+}
 async function attendEvent(eid,btn){
   if(!currentUser)return;
   try{
