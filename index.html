@@ -818,7 +818,7 @@ async function renderGroups(){
   var el=qs("groups-list");if(!el)return;
   el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
   try{
-    var query=supa.from("groups").select("*").order("created_at",{ascending:false});
+    var query=supa.from("groups").select("*, group_members(count)").order("created_at",{ascending:false});
     if(currentGroupFilter!=="all") query=query.eq("type",currentGroupFilter);
     var res=await query;
     var groups=res.data||[];
@@ -830,7 +830,7 @@ async function renderGroups(){
     groups.forEach(function(g){
       var typeInfo={club:{emoji:"🎯",color:"#e91e8c",label:"Club"},classe:{emoji:"📚",color:"#1a73e8",label:"Classe"},cours:{emoji:"📖",color:"#2ecc71",label:"Cours"}};
       var t=typeInfo[g.type]||{emoji:"👥",color:"#888",label:g.type};
-      var members=0;
+      var members=(g.group_members&&g.group_members[0]&&g.group_members[0].count!=null)?g.group_members[0].count:0;
       html+="<div class='gcard' data-gid='"+g.id+"' onclick='openGroup(this.dataset.gid)'>";
       html+="<div class='gcard-head'>";
       html+="<div class='gicon' style='background:"+t.color+"22;border:1px solid "+t.color+"44'>"+t.emoji+"</div>";
@@ -888,17 +888,14 @@ async function createGroup(){
 
 async function joinGroup(gid){
   if(!currentUser){toast("Connecte-toi d'abord.");return;}
-  try{
-    var res=await supa.from("group_members").insert({group_id:gid,user_id:currentUser.id,role:"member"});
-    if(res.error){
-      if(res.error.code==="23505"){toast("Tu es déjà membre !");}
-      else{toast("Erreur: "+res.error.message);}
-      return;
-    }
-    toast("✅ Tu as rejoint le groupe !");
-    closeMod();
-    await renderGroups();
-  }catch(e){toast("Erreur: "+e.message);}
+  // Check if already member
+  var check=await supa.from("group_members").select("id").eq("group_id",gid).eq("user_id",currentUser.id);
+  if(check.data&&check.data.length>0){toast("Tu es déjà membre !");return;}
+  var res=await supa.from("group_members").insert({group_id:gid,user_id:currentUser.id,role:"member"});
+  if(res.error){toast("Erreur: "+res.error.message);return;}
+  toast("✅ Tu as rejoint le groupe !");
+  closeMod();
+  await renderGroups();
 }
 
 var ROLES={president:"👑 Président",vice_president:"⭐ Vice-Président",secretaire:"📋 Secrétaire",member:"👤 Membre"};
@@ -907,15 +904,17 @@ async function openGroup(gid){
   try{
     var res=await supa.from("groups").select("*").eq("id",gid).single();
     var g=res.data;if(!g)return;
-    var mres=await supa.from("group_members").select("*,profiles(id,nom,avatar,couleur,profile_pic)").eq("group_id",gid).order("joined_at",{ascending:true});
+    var mres=await supa.from("group_members").select("*").eq("group_id",gid);
     var members=mres.data||[];
 
     // Find current user's role
     var myMembership=members.find(function(m){return currentUser&&m.user_id===currentUser.id;});
     var myRole=myMembership?myMembership.role:null;
+    // Also check if user is the creator (created_by field)
+    if(!myRole&&currentUser&&g.created_by===currentUser.id) myRole="president";
     var isPresident=myRole==="president";
     var isLeader=myRole==="president"||myRole==="vice_president";
-    var isMember=!!myMembership;
+    var isMember=!!myMembership||(currentUser&&g.created_by===currentUser.id);
 
     var typeEmoji={club:"🎯",classe:"📚",cours:"📖"};
     var html="<div style='margin-bottom:14px'>";
@@ -925,18 +924,17 @@ async function openGroup(gid){
     if(myRole)html+="<div style='font-size:12px;color:var(--acc);font-weight:700'>"+( ROLES[myRole]||myRole)+"</div>";
     html+="</div>";
 
-    html+="<div style='font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:10px'>MEMBRES ("+members.length+")</div>";
+    var totalMembers=members.length+((!myMembership&&currentUser&&g.created_by===currentUser.id)?1:0);
+    html+="<div style='font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:10px'>MEMBRES ("+totalMembers+")</div>";
     html+="<div style='margin-bottom:16px'>";
     members.forEach(function(m){
-      var u=m.profiles||{};
-      var ini=(u.avatar||(u.nom||"?").slice(0,2).toUpperCase()).trim();
       var roleLabel=ROLES[m.role]||m.role;
+      var isMe=currentUser&&m.user_id===currentUser.id;
       html+="<div style='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)'>";
-      html+=mkAv(ini,u.couleur,u.profile_pic,36);
-      html+="<div style='flex:1'><div style='font-size:14px;font-weight:600'>"+(u.nom||"?")+"</div>";
+      html+="<div style='width:36px;height:36px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700'>"+(isMe?"Moi":"👤")+"</div>";
+      html+="<div style='flex:1'><div style='font-size:14px;font-weight:600'>"+(isMe?"Moi":"Membre")+"</div>";
       html+="<div style='font-size:11px;color:rgba(255,255,255,.4)'>"+roleLabel+"</div></div>";
-      // Leader can change roles of non-presidents
-      if(isLeader&&m.role!=="president"&&m.user_id!==currentUser.id){
+      if(isLeader&&m.role!=="president"&&!isMe){
         html+="<button data-mid='"+m.id+"' data-uid='"+m.user_id+"' data-gid='"+gid+"' onclick='changeRole(this)' style='background:rgba(255,255,255,.08);border:none;border-radius:8px;padding:5px 10px;color:#fff;font-size:11px;cursor:pointer'>Rôle</button>";
       }
       html+="</div>";
