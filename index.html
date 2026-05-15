@@ -477,42 +477,51 @@ function compressImg(dataUrl, maxW, quality, cb){
   };
   img.src=dataUrl;
 }
+var pendingStoryFile=null;
 function previewStory(e){
   var f=e.target.files[0];if(!f)return;
+  pendingStoryFile=f;
   var r=new FileReader();
   r.onload=function(ev){
-    compressImg(ev.target.result,800,0.7,function(compressed){
-      pendingStoryImg=compressed;
-      var p=qs("story-preview");
-      if(p){
-        var img=document.createElement("img");
-        img.src=compressed;
-        img.style.cssText="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:8px";
-        p.innerHTML="";p.appendChild(img);
-      }
-    });
+    pendingStoryImg=ev.target.result;
+    var p=qs("story-preview");
+    if(p){
+      var img=document.createElement("img");
+      img.src=ev.target.result;
+      img.style.cssText="width:100%;max-height:200px;object-fit:cover;border-radius:12px;margin-bottom:8px";
+      p.innerHTML="";p.appendChild(img);
+    }
   };
   r.readAsDataURL(f);
 }
 
 async function publishStory(){
-  if(!pendingStoryImg&&!(qs("story-text")||{}).value){
+  var txt=(qs("story-text")||{}).value||"";
+  if(!pendingStoryFile&&!txt){
     var m=qs("story-msg");
     if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Ajoute une photo ou un texte.";}
     return;
   }
   if(!currentUser)return;
-  var txt=(qs("story-text")||{}).value||"";
-  var expires=new Date(Date.now()+24*60*60*1000).toISOString();
+  var m=qs("story-msg");
+  if(m){m.style.cssText="display:block;background:rgba(255,255,255,.08);border:none;color:rgba(255,255,255,.6)";m.textContent="Publication...";}
+  var imgUrl=null;
   try{
-    await supa.from("stories").insert({user_id:currentUser.id,img:pendingStoryImg||null,text:txt||null,expires_at:expires});
+    if(pendingStoryFile){
+      var ext=pendingStoryFile.name.split(".").pop()||"jpg";
+      var path=currentUser.id+"/story_"+Date.now()+"."+ext;
+      var upRes=await supa.storage.from("Avatars").upload(path,pendingStoryFile,{contentType:pendingStoryFile.type});
+      if(upRes.error)throw upRes.error;
+      imgUrl=supa.storage.from("Avatars").getPublicUrl(path).data.publicUrl;
+    }
+    var expires=new Date(Date.now()+24*60*60*1000).toISOString();
+    await supa.from("stories").insert({user_id:currentUser.id,img:imgUrl,text:txt||null,expires_at:expires});
+    pendingStoryFile=null;
     pendingStoryImg=null;
     closeMod();
-    pendingStoryImg=null;
     toast("Story publiée ! Disparaîtra dans 24h ✨");
     await renderStories();
   }catch(e){
-    var m=qs("story-msg");
     if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Erreur: "+e.message;}
   }
 }
@@ -1254,20 +1263,19 @@ function showEditProfile(){
   openMod("Modifier le profil",html);
 }
 var pendingProfilePic=null;
+var pendingProfileFile=null;
 function previewEditPic(e){
   var f=e.target.files[0];if(!f)return;
+  pendingProfileFile=f;
   var r=new FileReader();
   r.onload=function(ev){
-    compressImg(ev.target.result,400,0.8,function(compressed){
-      pendingProfilePic=compressed;
-      var p=qs("edit-pic-preview");
-      if(p){
-        var img=document.createElement("img");
-        img.src=compressed;
-        img.style.cssText="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--acc)";
-        p.innerHTML="";p.appendChild(img);
-      }
-    });
+    var p=qs("edit-pic-preview");
+    if(p){
+      var img=document.createElement("img");
+      img.src=ev.target.result;
+      img.style.cssText="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--acc)";
+      p.innerHTML="";p.appendChild(img);
+    }
   };
   r.readAsDataURL(f);
 }
