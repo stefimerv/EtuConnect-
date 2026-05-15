@@ -1263,12 +1263,13 @@ async function createEvent(){
 
 async function deleteEvent(eid){
   if(!currentUser)return;
-  if(!confirm("Supprimer cet événement ?"))return;
-  var r1=await supa.from("event_attendees").delete().eq("event_id",eid);
-  var r2=await supa.from("events").delete().eq("id",eid);
-  if(r2.error){toast("Erreur: "+r2.error.message);return;}
-  toast("Événement supprimé.");
-  renderEvents();
+  try{
+    await supa.from("event_attendees").delete().eq("event_id",eid);
+    var r=await supa.from("events").delete().eq("id",eid).eq("created_by",currentUser.id);
+    if(r.error){toast("Erreur: "+r.error.message);return;}
+    toast("✅ Supprimé !");
+    await renderEvents();
+  }catch(e){toast("Erreur: "+e.message);}
 }
 async function attendEvent(eid,btn){
   if(!currentUser)return;
