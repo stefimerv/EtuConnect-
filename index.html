@@ -79,6 +79,12 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
 #modal.open{display:flex}
 .setting-row{width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;background:none;border:none;color:#fff;font-size:14px;cursor:pointer;text-decoration:none}
 .setting-row:hover{background:rgba(255,255,255,.03)}
+.gfilter{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:99px;padding:7px 14px;color:rgba(255,255,255,.6);font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.gfilter.active{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:700}
+.gcard{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;margin-bottom:12px;cursor:pointer}
+.gcard-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.gicon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.gbadge{font-size:10px;padding:3px 8px;border-radius:99px;font-weight:700}
 #modal-box{background:#1a1a2e;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto}
 #modal-title{font-family:var(--fh);font-size:16px;font-weight:700;margin-bottom:16px}
 .mbtn{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px;color:#fff;font-size:14px;cursor:pointer;margin-bottom:8px}
@@ -221,7 +227,24 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
   <button class="nb active" id="nav-home" onclick="goTab('home')"><span class="ni">🏠</span><span>Accueil</span></button>
   <button class="nb" id="nav-discover" onclick="goTab('discover')"><span class="ni">🔍</span><span>Découvrir</span></button>
   <button class="nb" id="nav-messages" onclick="goTab('messages')"><span class="ni">💬</span><span>Messages</span></button>
+  <button class="nb" id="nav-groups" onclick="goTab('groups')"><span class="ni">🏫</span><span>Groupes</span></button>
   <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">👤</span><span>Moi</span></button>
+</div>
+
+<div id="tab-groups" class="tab">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <h2 style="font-family:var(--fh);font-size:18px">Groupes</h2>
+    <button onclick="showCreateGroup()" style="background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:8px 14px;color:#fff;font-size:13px;font-weight:700;cursor:pointer">+ Créer</button>
+  </div>
+  <!-- Type filter -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+    <button class="gfilter active" data-type="all" onclick="filterGroups('all',this)">Tous</button>
+    <button class="gfilter" data-type="club" onclick="filterGroups('club',this)">🎯 Clubs</button>
+    <button class="gfilter" data-type="classe" onclick="filterGroups('classe',this)">📚 Classes</button>
+    <button class="gfilter" data-type="cours" onclick="filterGroups('cours',this)">📖 Cours partagés</button>
+  </div>
+  <div id="groups-list"></div>
 </div>
 
 <div id="modal" onclick="if(event.target===this)closeMod()">
@@ -357,6 +380,7 @@ function goTab(tab){
   if(tab==="home")renderFeed();
   else if(tab==="discover")renderDiscover();
   else if(tab==="messages")renderMessages();
+  else if(tab==="groups")renderGroups();
   else if(tab==="settings")renderSettingsProfile();
 }
 
@@ -537,6 +561,117 @@ async function renderProfile(){
   el.innerHTML=html;
 }
 
+// GROUPS
+var currentGroupFilter = "all";
+
+async function renderGroups(){
+  var el=qs("groups-list");if(!el)return;
+  el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
+  try{
+    var query=supa.from("groups").select("*,group_members(count)").order("created_at",{ascending:false});
+    if(currentGroupFilter!=="all") query=query.eq("type",currentGroupFilter);
+    var res=await query;
+    var groups=res.data||[];
+    if(!groups.length){
+      el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun groupe encore.<br>Sois le premier à en créer un!</p>";
+      return;
+    }
+    var html="";
+    groups.forEach(function(g){
+      var typeInfo={club:{emoji:"🎯",color:"#e91e8c",label:"Club"},classe:{emoji:"📚",color:"#1a73e8",label:"Classe"},cours:{emoji:"📖",color:"#2ecc71",label:"Cours"}};
+      var t=typeInfo[g.type]||{emoji:"👥",color:"#888",label:g.type};
+      var members=(g.group_members&&g.group_members[0])?g.group_members[0].count:0;
+      html+="<div class='gcard' data-gid='"+g.id+"' onclick='openGroup(this.dataset.gid)'>";
+      html+="<div class='gcard-head'>";
+      html+="<div class='gicon' style='background:"+t.color+"22;border:1px solid "+t.color+"44'>"+t.emoji+"</div>";
+      html+="<div style='flex:1'>";
+      html+="<div style='font-weight:700;font-size:15px;margin-bottom:3px'>"+g.name+"</div>";
+      html+="<div style='display:flex;gap:6px;align-items:center'>";
+      html+="<span class='gbadge' style='background:"+t.color+"22;color:"+t.color+"'>"+t.label+"</span>";
+      html+="<span style='font-size:12px;color:rgba(255,255,255,.4)'>"+members+" membre"+(members>1?"s":"")+"</span>";
+      html+="</div></div></div>";
+      if(g.description) html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:10px'>"+g.description+"</div>";
+      html+="<button data-gid='"+g.id+"' onclick='event.stopPropagation();joinGroup(this.dataset.gid)' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:7px 16px;color:#fff;font-size:13px;cursor:pointer'>Rejoindre</button>";
+      html+="</div>";
+    });
+    el.innerHTML=html;
+  }catch(e){
+    el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur de chargement.</p>";
+  }
+}
+
+function filterGroups(type,btn){
+  currentGroupFilter=type;
+  document.querySelectorAll(".gfilter").forEach(function(b){b.classList.remove("active");});
+  btn.classList.add("active");
+  renderGroups();
+}
+
+function showCreateGroup(){
+  var html="<div class='field'><label>NOM DU GROUPE</label><input type='text' id='g-name' placeholder='Ex: Club de foot, Terminale S...'></div>";
+  html+="<div class='field'><label>TYPE</label><select id='g-type'><option value='club'>🎯 Club</option><option value='classe'>📚 Classe</option><option value='cours'>📖 Cours partagé</option></select></div>";
+  html+="<div class='field'><label>DESCRIPTION</label><input type='text' id='g-desc' placeholder='De quoi parle ce groupe?'></div>";
+  html+="<div id='g-msg' style='display:none;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px'></div>";
+  html+="<button class='btn-acc' onclick='createGroup()'>Créer le groupe</button>";
+  html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Annuler</button>";
+  openMod("Créer un groupe",html);
+}
+
+async function createGroup(){
+  var name=(qs("g-name")||{}).value||"";
+  var type=(qs("g-type")||{}).value||"club";
+  var desc=(qs("g-desc")||{}).value||"";
+  if(!name){var m=qs("g-msg");if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent="Entre un nom pour le groupe.";}return;}
+  if(!currentUser)return;
+  try{
+    var res=await supa.from("groups").insert({name:name,type:type,description:desc||null,created_by:currentUser.id}).select().single();
+    if(res.error){var m=qs("g-msg");if(m){m.style.cssText="display:block;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.3);color:#e74c3c";m.textContent=res.error.message;}return;}
+    // Auto-join as member
+    await supa.from("group_members").insert({group_id:res.data.id,user_id:currentUser.id,role:"admin"});
+    closeMod();
+    toast("Groupe créé !");
+    renderGroups();
+  }catch(e){toast("Erreur: "+e.message);}
+}
+
+async function joinGroup(gid){
+  if(!currentUser)return;
+  try{
+    await supa.from("group_members").insert({group_id:gid,user_id:currentUser.id,role:"member"});
+    toast("Tu as rejoint le groupe !");
+    renderGroups();
+  }catch(e){toast("Déjà membre ou erreur.");}
+}
+
+async function openGroup(gid){
+  try{
+    var res=await supa.from("groups").select("*").eq("id",gid).single();
+    var g=res.data;if(!g)return;
+    var mres=await supa.from("group_members").select("*,profiles(nom,avatar,couleur,profile_pic)").eq("group_id",gid).limit(20);
+    var members=mres.data||[];
+    var typeEmoji={club:"🎯",classe:"📚",cours:"📖"};
+    var html="<div style='margin-bottom:16px'>";
+    html+="<div style='font-size:28px;margin-bottom:4px'>"+(typeEmoji[g.type]||"👥")+"</div>";
+    html+="<div style='font-family:var(--fh);font-size:18px;font-weight:900;margin-bottom:6px'>"+g.name+"</div>";
+    if(g.description)html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:12px'>"+g.description+"</div>";
+    html+="</div>";
+    html+="<div style='font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px;margin-bottom:10px'>MEMBRES ("+members.length+")</div>";
+    html+="<div style='display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px'>";
+    members.forEach(function(m){
+      var u=m.profiles||{};
+      var ini=(u.avatar||(u.nom||"?").slice(0,2).toUpperCase()).trim();
+      html+="<div style='text-align:center'>";
+      html+=mkAv(ini,u.couleur,u.profile_pic,40);
+      html+="<div style='font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;max-width:44px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap'>"+(u.nom||"?").split(" ")[0]+"</div>";
+      html+="</div>";
+    });
+    html+="</div>";
+    html+="<button class='btn-acc' data-gid='"+gid+"' onclick='joinGroup(this.dataset.gid)'>Rejoindre</button>";
+    html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Fermer</button>";
+    openMod(g.name,html);
+  }catch(e){toast("Erreur: "+e.message);}
+}
+
 // SETTINGS
 function showAccountInfo(){
   if(!currentUser)return;
@@ -557,22 +692,50 @@ function showAccountInfo(){
   openMod("Mon compte",html);
 }
 function showEditProfile(){
-  var html="<div class='field'><label>BIO</label><input type='text' id='edit-bio' value='"+(ME.bio||"").replace(/'/g,"")+"'></div>";
-  html+="<div class='field'><label>VILLE</label><input type='text' id='edit-ville' value='"+(ME.ville||"")+"'></div>";
-  html+="<div class='field'><label>PAYS</label><input type='text' id='edit-pays' value='"+(ME.pays||"")+"'></div>";
+  var ini=(ME.avatar||(ME.nom||"?").slice(0,2).toUpperCase()).trim();
+  var html="<div style='text-align:center;margin-bottom:16px'>";
+  html+=mkAv(ini,ME.couleur,ME.profile_pic,80);
+  html+="<div style='margin-top:8px'><label style='background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:8px 16px;font-size:13px;cursor:pointer'>📷 Changer la photo<input type='file' id='edit-pic' accept='image/*' style='display:none' onchange='previewEditPic(event)'></label></div>";
+  html+="<div id='edit-pic-preview' style='margin-top:8px'></div></div>";
+  html+="<div class='field'><label>BIO</label><input type='text' id='edit-bio' value='"+(ME.bio||"").replace(/'/g,"")+"' placeholder='Quelques mots...'></div>";
+  html+="<div class='field'><label>VILLE</label><input type='text' id='edit-ville' value='"+(ME.ville||"")+"' placeholder='Ta ville'></div>";
+  html+="<div class='field'><label>PAYS</label><input type='text' id='edit-pays' value='"+(ME.pays||"")+"' placeholder='Ton pays'></div>";
   html+="<div id='edit-msg' style='display:none;border-radius:10px;padding:10px;font-size:13px;margin-bottom:10px;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.3);color:#2ecc71'></div>";
   html+="<button class='btn-acc' onclick='saveProfile()'>Enregistrer</button>";
   html+="<button class='mbtn cancel' onclick='closeMod()' style='margin-top:8px'>Annuler</button>";
   openMod("Modifier le profil",html);
 }
+var pendingProfilePic=null;
+function previewEditPic(e){
+  var f=e.target.files[0];if(!f)return;
+  var r=new FileReader();
+  r.onload=function(ev){
+    pendingProfilePic=ev.target.result;
+    var p=qs("edit-pic-preview");
+    if(p){
+      var img=document.createElement("img");
+      img.src=ev.target.result;
+      img.style.cssText="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--acc)";
+      p.innerHTML="";p.appendChild(img);
+    }
+  };
+  r.readAsDataURL(f);
+}
 async function saveProfile(){
   var bio=(qs("edit-bio")||{}).value||"";
   var ville=(qs("edit-ville")||{}).value||"";
   var pays=(qs("edit-pays")||{}).value||"";
-  var res=await supa.from("profiles").update({bio:bio,ville:ville,pays:pays}).eq("id",currentUser.id);
+  var updates={bio:bio,ville:ville,pays:pays};
+  if(pendingProfilePic)updates.profile_pic=pendingProfilePic;
+  var res=await supa.from("profiles").update(updates).eq("id",currentUser.id);
   var m=qs("edit-msg");
   if(m){m.style.display="block";m.textContent=res.error?"Erreur: "+res.error.message:"Profil mis a jour!";}
-  if(!res.error){await loadProfile();setTimeout(function(){closeMod();renderProfile();},1500);}
+  if(!res.error){
+    pendingProfilePic=null;
+    await loadProfile();
+    renderSettingsProfile();
+    setTimeout(function(){closeMod();},1500);
+  }
 }
 function showForgotPwd(){
   var html="<div class='field'><label>EMAIL</label><input type='email' id='reset-email' placeholder='ton@email.com'></div>";
