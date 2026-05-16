@@ -757,6 +757,7 @@ async function renderDiscover(){
         friendMap[other]=f.status;
       });
     }
+    console.log('Utilisateurs chargés:', users.length, users.map(function(u){return u.nom;}));
     var html="";
     users.forEach(function(u){
       var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
@@ -837,6 +838,7 @@ async function renderMessages(){
   var el=qs("convlist");if(!el||!currentUser)return;
   try{
     var res=await supa.from("messages").select("*").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(50);
+    console.log('Messages res:', res.error, res.data&&res.data.length);
     var msgs=res.data||[];
     if(!msgs.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun message.</p>";return;}
     var uids=[...new Set(msgs.map(function(m){return m.sender_id===currentUser.id?m.receiver_id:m.sender_id;}))];
