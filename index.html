@@ -682,17 +682,25 @@ async function renderFeed(){
   var el=qs("feed");if(!el)return;
   el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
   try{
-    var res=await supa.from("posts").select("*,profiles(nom,avatar,couleur,profile_pic)").order("created_at",{ascending:false}).limit(20);
+    // Étape 1 : récupérer les posts
+    var res=await supa.from("posts").select("*").order("created_at",{ascending:false}).limit(20);
     if(!res.data||!res.data.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucune publication.</p>";return;}
+    var posts=res.data;
+
+    // Étape 2 : récupérer les profils des auteurs
+    var uids=[...new Set(posts.map(function(p){return p.user_id;}))];
+    var profRes=await supa.from("profiles").select("id,nom,avatar,couleur,profile_pic").in("id",uids);
+    var profMap={};
+    (profRes.data||[]).forEach(function(u){profMap[u.id]=u;});
+
     var html="";
-    res.data.forEach(function(p){
-      var u=p.profiles||{};
+    posts.forEach(function(p){
+      var u=profMap[p.user_id]||{};
       var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
       var isMe=currentUser&&p.user_id===currentUser.id;
       html+="<div class='pcard'>";
-      var isMe2=currentUser&&p.user_id===currentUser.id;
-      var pav=isMe2?mkAv((ME.avatar||"?"),ME.couleur,ME.profile_pic,40):mkAv(ini,u.couleur,u.profile_pic,40);
-      var pnom=isMe2?(ME.nom||"Moi"):(u.nom||"Utilisateur");
+      var pav=isMe?mkAv((ME.avatar||"?"),ME.couleur,ME.profile_pic,40):mkAv(ini,u.couleur,u.profile_pic,40);
+      var pnom=isMe?(ME.nom||"Moi"):(u.nom||"Utilisateur");
       html+="<div class='phead'>"+pav;
       html+="<div><div style='font-weight:700;font-size:14px'>"+pnom+"</div>";
       html+="<div style='font-size:11px;color:rgba(255,255,255,.4)'>"+new Date(p.created_at).toLocaleDateString("fr-FR")+"</div></div>";
