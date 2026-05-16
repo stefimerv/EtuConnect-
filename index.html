@@ -1269,16 +1269,16 @@ async function createEvent(){
 async function deleteEvent(eid){
   if(!currentUser)return;
   try{
-    // Clear list immediately
-    var el=qs("events-list");
-    if(el) el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Suppression...</p>";
-    
+    // Remove from DOM immediately
+    var card=document.querySelector('[data-eid="'+eid+'"]');
+    if(card){
+      var parent=card.closest('.gcard');
+      if(parent)parent.remove();
+    }
+    // Delete from Supabase
     await supa.from("event_attendees").delete().eq("event_id",eid);
     await supa.from("events").delete().eq("id",eid);
-    
     toast("✅ Supprimé !");
-    // Force reload after short delay
-    setTimeout(async function(){await renderEvents();}, 500);
   }catch(e){toast("Erreur: "+e.message);}
 }
 async function attendEvent(eid,btn){
