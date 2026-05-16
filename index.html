@@ -770,11 +770,12 @@ async function renderDiscover(){
       } else {
         friendBtn="<button data-uid='"+u.id+"' onclick='sendFriendReq(this.dataset.uid,this)' style='background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.3);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer'>+ Ami</button>";
       }
-      html+="<div class='card' style='display:flex;align-items:center;gap:10px;cursor:pointer' data-uid='"+u.id+"' onclick='showUserProfile(this.dataset.uid)'>"+mkAv(ini,u.couleur,u.profile_pic,46);
-      html+="<div style='flex:1;cursor:pointer'><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
+      html+="<div class='card' style='display:flex;align-items:center;gap:10px'>";
+      html+="<div data-uid='"+u.id+"' onclick='showUserProfile(this.dataset.uid)' style='cursor:pointer;display:flex;align-items:center;gap:10px;flex:1'>"+mkAv(ini,u.couleur,u.profile_pic,46);
+      html+="<div><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
       html+="<div style='font-size:12px;color:rgba(255,255,255,.4)'>"+(u.niveau||"")+(u.etablissement?" - "+u.etablissement:"")+"</div>";
       if(loc)html+="<div style='font-size:11px;color:rgba(255,255,255,.3)'>📍 "+loc+"</div>";
-      html+="</div>"+friendBtn+"</div>";
+      html+="</div></div>"+friendBtn+"</div>";
     });
     el.innerHTML=html;
   }catch(e){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur.</p>";}
@@ -835,44 +836,40 @@ async function acceptFriendAndDM(uid,nom){
 async function renderMessages(){
   var el=qs("convlist");if(!el||!currentUser)return;
   try{
-    // Récupérer tous les messages
     var res=await supa.from("messages").select("*").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(50);
     var msgs=res.data||[];
     if(!msgs.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun message.</p>";return;}
-    // Récupérer les profils des interlocuteurs
     var uids=[...new Set(msgs.map(function(m){return m.sender_id===currentUser.id?m.receiver_id:m.sender_id;}))];
     var pr=await supa.from("profiles").select("id,nom,avatar,couleur,profile_pic").in("id",uids);
     var pm={};(pr.data||[]).forEach(function(u){pm[u.id]=u;});
-    // Demandes en attente reçues
-    var pendingRes=await supa.from("messages").select("*").eq("receiver_id",currentUser.id).eq("pending",true).order("created_at",{ascending:false});
-    var pendingMap={};
-    (pendingRes.data||[]).forEach(function(m){if(!pendingMap[m.sender_id])pendingMap[m.sender_id]=m;});
     var seen={};
     msgs.forEach(function(m){
       var pid=m.sender_id===currentUser.id?m.receiver_id:m.sender_id;
-      if(!seen[pid])seen[pid]={partner:pm[pid]||{id:pid,nom:"?"},last:m,hasPending:!!pendingMap[pid]};
+      var isPending=m.pending===true&&m.receiver_id===currentUser.id;
+      if(!seen[pid])seen[pid]={partner:pm[pid]||{id:pid,nom:"?"},last:m,isPending:isPending};
     });
+    // Trier : demandes en attente reçues en haut
+    var convs=Object.values(seen);
+    convs.sort(function(a,b){return (b.isPending?1:0)-(a.isPending?1:0);});
     var html="";
-    // Demandes en attente en haut
-    Object.values(seen).filter(function(c){return c.hasPending&&c.last.sender_id!==currentUser.id;}).forEach(function(c){
+    convs.forEach(function(c){
       var u=c.partner;
       var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
-      html+="<div class='card' style='display:flex;align-items:center;gap:10px;border-color:rgba(233,30,140,.3)'>";
-      html+=mkAv(ini,u.couleur,u.profile_pic,46);
-      html+="<div style='flex:1'><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
-      html+="<div style='font-size:11px;color:var(--acc)'>📩 Demande de message</div></div>";
-      html+="<button data-uid='"+u.id+"' data-nom='"+(u.nom||"").replace(/'/g,"")+"' onclick='acceptMsgRequest(this.dataset.uid,this.dataset.nom)' style='background:rgba(233,30,140,.2);border:1px solid rgba(233,30,140,.4);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer'>Voir</button>";
-      html+="</div>";
-    });
-    // Conversations normales
-    Object.values(seen).filter(function(c){return !c.hasPending||c.last.sender_id===currentUser.id;}).forEach(function(c){
-      var u=c.partner;
-      var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
-      html+="<div class='card' style='display:flex;align-items:center;gap:10px;cursor:pointer' data-uid='"+u.id+"' data-nom='"+(u.nom||"").replace(/'/g,"")+"' onclick='openDM(this.dataset.uid,this.dataset.nom)'>"+mkAv(ini,u.couleur,u.profile_pic,46);
-      html+="<div><div style='font-weight:700'>"+(u.nom||"?")+"</div><div style='font-size:12px;color:rgba(255,255,255,.4)'>"+(c.last.text||"📷")+"</div></div></div>";
+      var safeNom=(u.nom||"?").replace(/'/g,"");
+      if(c.isPending){
+        html+="<div class='card' style='display:flex;align-items:center;gap:10px;border-color:rgba(233,30,140,.3)'>";
+        html+=mkAv(ini,u.couleur,u.profile_pic,46);
+        html+="<div style='flex:1'><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
+        html+="<div style='font-size:11px;color:var(--acc)'>📩 Demande de message</div></div>";
+        html+="<button data-uid='"+u.id+"' data-nom='"+safeNom+"' onclick='acceptMsgRequest(this.dataset.uid,this.dataset.nom)' style='background:rgba(233,30,140,.2);border:1px solid rgba(233,30,140,.4);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer'>Voir</button>";
+        html+="</div>";
+      } else {
+        html+="<div class='card' style='display:flex;align-items:center;gap:10px;cursor:pointer' data-uid='"+u.id+"' data-nom='"+safeNom+"' onclick='openDM(this.dataset.uid,this.dataset.nom)'>"+mkAv(ini,u.couleur,u.profile_pic,46);
+        html+="<div style='flex:1'><div style='font-weight:700'>"+(u.nom||"?")+"</div><div style='font-size:12px;color:rgba(255,255,255,.4)'>"+(c.last.text||"📷")+"</div></div></div>";
+      }
     });
     el.innerHTML=html||"<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun message.</p>";
-  }catch(e){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur.</p>";}
+  }catch(e){console.error(e);el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur: "+e.message+"</p>";}
 }
 
 // Envoyer un message (avec demande si non-amis)
