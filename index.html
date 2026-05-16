@@ -691,7 +691,17 @@ async function renderFeed(){
     el.innerHTML=html;
   }catch(e){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur de chargement.</p>";}
 }
-async function reactPost(pid){if(!currentUser)return;await supa.from("reactions").upsert({post_id:pid,user_id:currentUser.id,type:"like"});toast("❤️");}
+async function reactPost(pid,type,btn){
+  if(!currentUser){toast("Connecte-toi pour réagir.");return;}
+  var emojis={like:"👍",dislike:"👎",love:"❤️",angry:"😡"};
+  await supa.from("reactions").upsert({post_id:pid,user_id:currentUser.id,type:type||"like"});
+  // Visual feedback
+  if(btn){
+    btn.style.background="rgba(233,30,140,.2)";
+    btn.style.borderColor="rgba(233,30,140,.4)";
+  }
+  toast(emojis[type]||"❤️");
+}
 async function deletePost(pid){if(!currentUser)return;await supa.from("posts").delete().eq("id",pid).eq("user_id",currentUser.id);renderFeed();}
 function sharePost(nom,txt){var msg=(nom||"EtuConnect")+": "+txt+"\nhttps://stefimerv.github.io/EtuConnect-/";if(navigator.share)navigator.share({title:"EtuConnect",text:msg}).catch(function(){});else window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");}
 
