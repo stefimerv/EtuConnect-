@@ -739,24 +739,12 @@ async function renderDiscover(){
     var users=res.data||[];
     if(q)users=users.filter(function(u){return (u.nom||"").toLowerCase().includes(q)||(u.etablissement||"").toLowerCase().includes(q)||(u.pays||"").toLowerCase().includes(q);});
     if(!users.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun eleve trouve.</p>";return;}
-    var friendMap={};
-    if(currentUser){
-      var fr=await supa.from("friendships").select("requester_id,addressee_id,status").or("requester_id.eq."+currentUser.id+",addressee_id.eq."+currentUser.id);
-      (fr.data||[]).forEach(function(f){var other=f.requester_id===currentUser.id?f.addressee_id:f.requester_id;friendMap[other]=f.status;});
-    }
     var html="";
     users.forEach(function(u){
       var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
       var loc=[u.ville,u.pays].filter(Boolean).join(", ");
-      var fs=friendMap[u.id];
-      var actionBtn="";
-      if(fs==="accepted"){
-        actionBtn="<button data-uid='"+u.id+"' data-nom='"+(u.nom||"").replace(/'/g,"")+"' onclick='event.stopPropagation();openDM(this.dataset.uid,this.dataset.nom)' style='background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);border-radius:10px;padding:7px 12px;color:#2ecc71;font-size:13px;cursor:pointer;flex-shrink:0'>💬</button>";
-      } else if(fs==="pending"){
-        actionBtn="<span style='font-size:11px;color:rgba(255,255,255,.3);flex-shrink:0'>En attente</span>";
-      } else {
-        actionBtn="<button data-uid='"+u.id+"' onclick='event.stopPropagation();sendFriendReq(this.dataset.uid,this)' style='background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.3);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer;flex-shrink:0'>+ Ami</button>";
-      }
+      var safeNom=(u.nom||"").replace(/'/g,"");
+      var actionBtn="<button data-uid='"+u.id+"' onclick='event.stopPropagation();sendFriendReq(this.dataset.uid,this)' style='background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.3);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer;flex-shrink:0'>+ Ami</button>";
       html+="<div class='card' style='display:flex;align-items:center;gap:10px;cursor:pointer' data-uid='"+u.id+"' onclick='showUserProfile(this.dataset.uid)'>";
       html+=mkAv(ini,u.couleur,u.profile_pic,46);
       html+="<div style='flex:1'><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
