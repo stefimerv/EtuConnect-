@@ -682,7 +682,7 @@ async function renderFeed(){
   var el=qs("feed");if(!el)return;
   el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
   try{
-    var res=await supa.from("posts").select("*").order("created_at",{ascending:false}).limit(20);
+    var res=await supa.from("posts").select("*,profiles(nom,avatar,couleur,profile_pic)").order("created_at",{ascending:false}).limit(20);
     if(!res.data||!res.data.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucune publication.</p>";return;}
     var html="";
     res.data.forEach(function(p){
@@ -691,8 +691,8 @@ async function renderFeed(){
       var isMe=currentUser&&p.user_id===currentUser.id;
       html+="<div class='pcard'>";
       var isMe2=currentUser&&p.user_id===currentUser.id;
-      var pav=isMe2?mkAv((ME.avatar||"?"),ME.couleur,ME.profile_pic,40):"<div class='av' style='width:40px;height:40px;background:rgba(255,255,255,.1);font-size:18px'>👤</div>";
-      var pnom=isMe2?(ME.nom||"Moi"):"Utilisateur";
+      var pav=isMe2?mkAv((ME.avatar||"?"),ME.couleur,ME.profile_pic,40):mkAv(ini,u.couleur,u.profile_pic,40);
+      var pnom=isMe2?(ME.nom||"Moi"):(u.nom||"Utilisateur");
       html+="<div class='phead'>"+pav;
       html+="<div><div style='font-weight:700;font-size:14px'>"+pnom+"</div>";
       html+="<div style='font-size:11px;color:rgba(255,255,255,.4)'>"+new Date(p.created_at).toLocaleDateString("fr-FR")+"</div></div>";
