@@ -722,11 +722,14 @@ async function renderFeed(){
 async function reactPost(pid,type,btn){
   if(!currentUser){toast("Connecte-toi pour réagir.");return;}
   var emojis={like:"👍",dislike:"👎",love:"❤️",angry:"😡"};
-  await supa.from("reactions").upsert({post_id:pid,user_id:currentUser.id,type:type||"like"});
-  // Visual feedback
+  var res=await supa.from("reactions").upsert({post_id:pid,user_id:currentUser.id,type:type||"like"},{onConflict:"post_id,user_id"});
+  if(res.error){toast("Erreur réaction.");return;}
   if(btn){
-    btn.style.background="rgba(233,30,140,.2)";
-    btn.style.borderColor="rgba(233,30,140,.4)";
+    var card=btn.closest(".pcard");
+    if(card){card.querySelectorAll(".pact[data-type]").forEach(function(b){b.style.background="rgba(255,255,255,.06)";b.style.borderColor="rgba(255,255,255,.1)";b.style.color="#fff";});}
+    btn.style.background="rgba(233,30,140,.25)";
+    btn.style.borderColor="rgba(233,30,140,.6)";
+    btn.style.color="var(--acc)";
   }
   toast(emojis[type]||"❤️");
 }
