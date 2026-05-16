@@ -355,7 +355,12 @@ async function doRegister(){
     if(res.error){showErr(res.error.message);btn.textContent="Creer mon profil";btn.disabled=false;return;}
     currentUser=res.data.user;
     if(currentUser){
-      await supa.from("profiles").update({nom:regTmp.nom,username:regTmp.username,age:parseInt(age),niveau:niv,etablissement:etab,pays:pays||null,ville:ville||null,bio:bio||"Nouveau sur EtuConnect",avatar:ini,couleur:col}).eq("id",currentUser.id);
+      // Try update first, then insert if not exists
+      var upd=await supa.from("profiles").update({nom:regTmp.nom,username:regTmp.username,age:parseInt(age),niveau:niv,etablissement:etab,pays:pays||null,ville:ville||null,bio:bio||"Nouveau sur EtuConnect",avatar:ini,couleur:col}).eq("id",currentUser.id);
+      if(upd.error||!upd.data||upd.data.length===0){
+        // Profile doesn't exist yet, insert it
+        await supa.from("profiles").insert({id:currentUser.id,nom:regTmp.nom,username:regTmp.username,age:parseInt(age),niveau:niv,etablissement:etab,pays:pays||null,ville:ville||null,bio:bio||"Nouveau sur EtuConnect",avatar:ini,couleur:col});
+      }
     }
     if(res.data.session){await loadProfile();launchApp();}
     else{toast("Verifie ton email pour confirmer ton compte!");goBackSplash();}
@@ -385,7 +390,16 @@ function logout(){supa.auth.signOut();currentUser=null;ME={};qs("main").style.di
 async function loadProfile(){
   if(!currentUser)return;
   var res=await supa.from("profiles").select("*").eq("id",currentUser.id).single();
-  if(res.data)ME=res.data;
+  if(res.data){
+    ME=res.data;
+  } else {
+    // Auto-create profile if missing
+    var email=currentUser.email||"";
+    var defaultNom=email.split("@")[0]||"Utilisateur";
+    await supa.from("profiles").insert({id:currentUser.id,nom:defaultNom,username:"@"+defaultNom,bio:"Nouveau sur EtuConnect",avatar:defaultNom.slice(0,2).toUpperCase(),couleur:"#e91e8c"});
+    var res2=await supa.from("profiles").select("*").eq("id",currentUser.id).single();
+    if(res2.data)ME=res2.data;
+  }
 }
 
 function launchApp(){
