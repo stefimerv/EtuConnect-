@@ -585,7 +585,7 @@ function showStoryViewer(){
     body+="<div style='width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#302b63,#0f0c29)'></div>";
   }
   else body+="<div style='width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#302b63,#0f0c29)'></div>";
-  if(s.text)body+="<div style='position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:18px;font-weight:700;text-shadow:0 2px 8px rgba(0,0,0,.8);padding:0 20px'>"+s.text+"</div>";
+  if(s.text)body+="<div style='position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);text-align:center;font-size:22px;font-weight:700;text-shadow:0 2px 12px rgba(0,0,0,.9);padding:0 24px'>"+s.text+"</div>";
   // Nav areas
   body+="<div onclick='prevStory()' style='position:absolute;top:0;left:0;width:40%;height:100%;cursor:pointer'></div>";
   body+="<div onclick='nextStory()' style='position:absolute;top:0;right:0;width:60%;height:100%;cursor:pointer'></div>";
