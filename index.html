@@ -748,41 +748,160 @@ async function renderDiscover(){
     var users=res.data||[];
     if(q)users=users.filter(function(u){return (u.nom||"").toLowerCase().includes(q)||(u.etablissement||"").toLowerCase().includes(q)||(u.pays||"").toLowerCase().includes(q);});
     if(!users.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun eleve trouve.</p>";return;}
+    // Charger les amitiés en cours
+    var friendMap={};
+    if(currentUser){
+      var fr=await supa.from("friendships").select("requester_id,addressee_id,status").or("requester_id.eq."+currentUser.id+",addressee_id.eq."+currentUser.id);
+      (fr.data||[]).forEach(function(f){
+        var other=f.requester_id===currentUser.id?f.addressee_id:f.requester_id;
+        friendMap[other]=f.status;
+      });
+    }
     var html="";
     users.forEach(function(u){
       var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
       var loc=[u.ville,u.pays].filter(Boolean).join(", ");
-      html+="<div class='card' style='display:flex;align-items:center;gap:10px'>"+mkAv(ini,u.couleur,u.profile_pic,46);
-      html+="<div style='flex:1'><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
+      var fs=friendMap[u.id];
+      var friendBtn="";
+      if(fs==="accepted"){
+        friendBtn="<button data-uid='"+u.id+"' data-nom='"+(u.nom||"").replace(/'/g,"")+"' onclick='openDM(this.dataset.uid,this.dataset.nom)' style='background:rgba(46,204,113,.15);border:1px solid rgba(46,204,113,.4);border-radius:10px;padding:7px 12px;color:#2ecc71;font-size:13px;cursor:pointer'>💬</button>";
+      } else if(fs==="pending"){
+        friendBtn="<span style='font-size:12px;color:rgba(255,255,255,.3);padding:7px 12px'>En attente</span>";
+      } else {
+        friendBtn="<button data-uid='"+u.id+"' onclick='sendFriendReq(this.dataset.uid,this)' style='background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.3);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer'>+ Ami</button>";
+      }
+      html+="<div class='card' style='display:flex;align-items:center;gap:10px;cursor:pointer' data-uid='"+u.id+"' onclick='showUserProfile(this.dataset.uid)'>"+mkAv(ini,u.couleur,u.profile_pic,46);
+      html+="<div style='flex:1;cursor:pointer'><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
       html+="<div style='font-size:12px;color:rgba(255,255,255,.4)'>"+(u.niveau||"")+(u.etablissement?" - "+u.etablissement:"")+"</div>";
       if(loc)html+="<div style='font-size:11px;color:rgba(255,255,255,.3)'>📍 "+loc+"</div>";
-      html+="</div><button data-uid='"+u.id+"' onclick='sendFriendReq(this.dataset.uid)' style='background:rgba(233,30,140,.15);border:1px solid rgba(233,30,140,.3);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer'>+</button></div>";
+      html+="</div>"+friendBtn+"</div>";
     });
     el.innerHTML=html;
   }catch(e){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur.</p>";}
 }
 function searchUsers(){clearTimeout(window._st);window._st=setTimeout(renderDiscover,300);}
-async function sendFriendReq(uid){if(!currentUser)return;try{await supa.from("friendships").insert({requester_id:currentUser.id,addressee_id:uid,status:"pending"});toast("Demande envoyee!");}catch(e){toast("Deja envoye ou erreur.");}}
+async function sendFriendReq(uid,btn){
+  if(!currentUser)return;
+  try{
+    await supa.from("friendships").insert({requester_id:currentUser.id,addressee_id:uid,status:"pending"});
+    if(btn){btn.textContent="En attente";btn.disabled=true;btn.style.color="rgba(255,255,255,.3)";}
+    toast("Demande envoyée !");
+  }catch(e){toast("Déjà envoyée ou erreur.");}
+}
+
+// Voir le profil d'un autre utilisateur
+async function showUserProfile(uid){
+  if(!currentUser)return;
+  var res=await supa.from("profiles").select("*").eq("id",uid).single();
+  if(!res.data){toast("Profil introuvable.");return;}
+  var u=res.data;
+  var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
+  var loc=[u.ville,u.pays].filter(Boolean).join(", ");
+  // Vérifier statut amitié
+  var fr=await supa.from("friendships").select("status,requester_id").or("and(requester_id.eq."+currentUser.id+",addressee_id.eq."+uid+"),and(requester_id.eq."+uid+",addressee_id.eq."+currentUser.id+")").maybeSingle();
+  var fs=fr.data?fr.data.status:null;
+  var isRequester=fr.data&&fr.data.requester_id===currentUser.id;
+  var safeNom=(u.nom||"").replace(/'/g,"");
+  var actionBtn="";
+  if(fs==="accepted"){
+    actionBtn="<button data-uid='"+uid+"' data-nom='"+safeNom+"' onclick='openDM(this.dataset.uid,this.dataset.nom);closeMod()' style='background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:12px;padding:11px 24px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;width:100%;margin-bottom:8px'>💬 Envoyer un message</button>";
+  } else if(fs==="pending"&&isRequester){
+    actionBtn="<button disabled style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:11px 24px;color:rgba(255,255,255,.4);font-size:14px;width:100%;margin-bottom:8px'>⏳ Demande en attente</button>";
+  } else if(fs==="pending"&&!isRequester){
+    actionBtn="<button data-uid='"+uid+"' data-nom='"+safeNom+"' onclick='acceptFriendAndDM(this.dataset.uid,this.dataset.nom)' style='background:linear-gradient(135deg,#2ecc71,#27ae60);border:none;border-radius:12px;padding:11px 24px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;width:100%;margin-bottom:8px'>✅ Accepter et écrire</button>";
+    actionBtn+="<button data-uid='"+uid+"' data-nom='"+safeNom+"' onclick='openDMRequest(this.dataset.uid,this.dataset.nom)' style='background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:11px 24px;color:#fff;font-size:14px;cursor:pointer;width:100%;margin-bottom:8px'>💬 Envoyer quand même</button>";
+  } else {
+    actionBtn="<button data-uid='"+uid+"' data-nom='"+safeNom+"' onclick='openDMRequest(this.dataset.uid,this.dataset.nom)' style='background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:12px;padding:11px 24px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;width:100%;margin-bottom:8px'>💬 Envoyer un message</button>";
+  }
+  var html="<div style='text-align:center;padding:8px 0 16px'>";
+  html+=mkAv(ini,u.couleur,u.profile_pic,80);
+  html+="<div style='font-family:var(--fh);font-size:20px;font-weight:900;margin:12px 0 4px'>"+(u.nom||"?")+"</div>";
+  if(u.username)html+="<div style='color:rgba(255,255,255,.4);font-size:13px;margin-bottom:6px'>"+u.username+"</div>";
+  if(u.niveau||u.etablissement)html+="<div style='font-size:13px;color:rgba(255,255,255,.6);margin-bottom:4px'>"+(u.niveau||"")+(u.etablissement?" · "+u.etablissement:"")+"</div>";
+  if(loc)html+="<div style='font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px'>📍 "+loc+"</div>";
+  if(u.bio)html+="<div style='font-size:13px;color:rgba(255,255,255,.6);line-height:1.5;margin-bottom:14px'>"+u.bio+"</div>";
+  html+="</div>"+actionBtn;
+  html+="<button class='mbtn cancel' onclick='closeMod()'>Fermer</button>";
+  openMod("Profil",html);
+}
+
+async function acceptFriendAndDM(uid,nom){
+  await supa.from("friendships").update({status:"accepted"}).or("and(requester_id.eq."+uid+",addressee_id.eq."+currentUser.id+"),and(requester_id.eq."+currentUser.id+",addressee_id.eq."+uid+")");
+  toast("Amis ! 🎉");
+  openDM(uid,nom);
+}
 
 // MESSAGES
 async function renderMessages(){
   var el=qs("convlist");if(!el||!currentUser)return;
   try{
-    var res=await supa.from("messages").select("*,sender:sender_id(id,nom,avatar,couleur,profile_pic),receiver:receiver_id(id,nom,avatar,couleur,profile_pic)").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(50);
+    // Récupérer tous les messages
+    var res=await supa.from("messages").select("*").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(50);
     var msgs=res.data||[];
     if(!msgs.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun message.</p>";return;}
+    // Récupérer les profils des interlocuteurs
+    var uids=[...new Set(msgs.map(function(m){return m.sender_id===currentUser.id?m.receiver_id:m.sender_id;}))];
+    var pr=await supa.from("profiles").select("id,nom,avatar,couleur,profile_pic").in("id",uids);
+    var pm={};(pr.data||[]).forEach(function(u){pm[u.id]=u;});
+    // Demandes en attente reçues
+    var pendingRes=await supa.from("messages").select("*").eq("receiver_id",currentUser.id).eq("pending",true).order("created_at",{ascending:false});
+    var pendingMap={};
+    (pendingRes.data||[]).forEach(function(m){if(!pendingMap[m.sender_id])pendingMap[m.sender_id]=m;});
     var seen={};
-    msgs.forEach(function(m){var p=m.sender_id===currentUser.id?m.receiver:m.sender;if(p&&!seen[p.id])seen[p.id]={partner:p,last:m};});
+    msgs.forEach(function(m){
+      var pid=m.sender_id===currentUser.id?m.receiver_id:m.sender_id;
+      if(!seen[pid])seen[pid]={partner:pm[pid]||{id:pid,nom:"?"},last:m,hasPending:!!pendingMap[pid]};
+    });
     var html="";
-    Object.values(seen).forEach(function(c){
+    // Demandes en attente en haut
+    Object.values(seen).filter(function(c){return c.hasPending&&c.last.sender_id!==currentUser.id;}).forEach(function(c){
+      var u=c.partner;
+      var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
+      html+="<div class='card' style='display:flex;align-items:center;gap:10px;border-color:rgba(233,30,140,.3)'>";
+      html+=mkAv(ini,u.couleur,u.profile_pic,46);
+      html+="<div style='flex:1'><div style='font-weight:700'>"+(u.nom||"?")+"</div>";
+      html+="<div style='font-size:11px;color:var(--acc)'>📩 Demande de message</div></div>";
+      html+="<button data-uid='"+u.id+"' data-nom='"+(u.nom||"").replace(/'/g,"")+"' onclick='acceptMsgRequest(this.dataset.uid,this.dataset.nom)' style='background:rgba(233,30,140,.2);border:1px solid rgba(233,30,140,.4);border-radius:10px;padding:7px 12px;color:var(--acc);font-size:13px;cursor:pointer'>Voir</button>";
+      html+="</div>";
+    });
+    // Conversations normales
+    Object.values(seen).filter(function(c){return !c.hasPending||c.last.sender_id===currentUser.id;}).forEach(function(c){
       var u=c.partner;
       var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
       html+="<div class='card' style='display:flex;align-items:center;gap:10px;cursor:pointer' data-uid='"+u.id+"' data-nom='"+(u.nom||"").replace(/'/g,"")+"' onclick='openDM(this.dataset.uid,this.dataset.nom)'>"+mkAv(ini,u.couleur,u.profile_pic,46);
       html+="<div><div style='font-weight:700'>"+(u.nom||"?")+"</div><div style='font-size:12px;color:rgba(255,255,255,.4)'>"+(c.last.text||"📷")+"</div></div></div>";
     });
-    el.innerHTML=html;
+    el.innerHTML=html||"<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun message.</p>";
   }catch(e){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Erreur.</p>";}
 }
+
+// Envoyer un message (avec demande si non-amis)
+async function openDMRequest(uid,nom){
+  if(!currentUser)return;
+  // Vérifier si amis
+  var fr=await supa.from("friendships").select("status").or("and(requester_id.eq."+currentUser.id+",addressee_id.eq."+uid+"),and(requester_id.eq."+uid+",addressee_id.eq."+currentUser.id+")").maybeSingle();
+  var isFriend=fr.data&&fr.data.status==="accepted";
+  if(isFriend){openDM(uid,nom);return;}
+  // Pas amis : envoyer en mode "pending"
+  dmUserId=uid;
+  var html="<div style='background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.3);border-radius:12px;padding:12px;margin-bottom:12px;font-size:13px;color:rgba(255,193,7,.9)'>⚠️ "+nom+" doit accepter ta demande pour lire ton message.</div>";
+  html+="<div id='dm-msgs' style='max-height:40vh;overflow-y:auto;margin-bottom:12px'></div>";
+  html+="<div style='display:flex;gap:8px'>";
+  html+="<input id='dm-inp' placeholder='Ton message...' style='flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px;color:#fff;outline:none' onkeydown='if(event.keyCode==13)sendCurrentDM()'>";
+  html+="<button onclick='sendCurrentDM()' style='background:linear-gradient(135deg,var(--acc),var(--acc2));border:none;border-radius:10px;padding:10px 14px;color:#fff;cursor:pointer'>&#9658;</button>";
+  html+="</div>";
+  openMod("💬 "+nom,html);
+  loadDMHistory(uid);
+}
+
+async function acceptMsgRequest(uid,nom){
+  // Marquer les messages comme acceptés
+  await supa.from("messages").update({pending:false}).eq("sender_id",uid).eq("receiver_id",currentUser.id);
+  // Créer amitié si elle n'existe pas
+  try{await supa.from("friendships").insert({requester_id:uid,addressee_id:currentUser.id,status:"accepted"});}catch(e){}
+  openDM(uid,nom);
+}
+
 var dmUserId=null;
 function openDM(uid,name){
   dmUserId=uid;
@@ -802,10 +921,11 @@ async function loadDMHistory(uid){
   var html="";
   msgs.forEach(function(m){
     var isMe=m.sender_id===currentUser.id;
+    var isPending=m.pending&&!isMe;
     html+="<div style='display:flex;justify-content:"+(isMe?"flex-end":"flex-start")+";margin-bottom:6px'>";
-    html+="<div style='max-width:75%;background:"+(isMe?"linear-gradient(135deg,var(--acc),var(--acc2))":"rgba(255,255,255,.1)")+";border-radius:12px;padding:8px 12px;font-size:13px'>"+(m.text||"📷")+"</div></div>";
+    html+="<div style='max-width:75%;background:"+(isMe?"linear-gradient(135deg,var(--acc),var(--acc2))":isPending?"rgba(255,193,7,.1)":"rgba(255,255,255,.1)")+";border-radius:12px;padding:8px 12px;font-size:13px'>"+(m.text||"📷")+"</div></div>";
   });
-  el.innerHTML=html;
+  el.innerHTML=html||"<p style='text-align:center;color:rgba(255,255,255,.2);font-size:12px;padding:20px'>Aucun message</p>";
   el.scrollTop=el.scrollHeight;
 }
 async function sendDM(uid){
@@ -813,7 +933,10 @@ async function sendDM(uid){
   var txt=(inp?inp.value:"").trim();
   if(!txt||!currentUser)return;
   inp.value="";
-  await supa.from("messages").insert({sender_id:currentUser.id,receiver_id:uid,text:txt});
+  // Vérifier si amis
+  var fr=await supa.from("friendships").select("status").or("and(requester_id.eq."+currentUser.id+",addressee_id.eq."+uid+"),and(requester_id.eq."+uid+",addressee_id.eq."+currentUser.id+")").maybeSingle();
+  var isFriend=fr.data&&fr.data.status==="accepted";
+  await supa.from("messages").insert({sender_id:currentUser.id,receiver_id:uid,text:txt,pending:!isFriend});
   loadDMHistory(uid);
 }
 
