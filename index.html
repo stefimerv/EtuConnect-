@@ -649,14 +649,19 @@ function previewPostImg(e){
 }
 async function publishPost(){
   var txt=(qs("nptxt").value||"").trim();
-  if(!txt&&!pendingPostImg)return;
+  if(!txt&&!pendingPostImg){toast("Écris quelque chose.");return;}
   if(!currentUser){toast("Connecte-toi pour publier.");return;}
   try{
-    await supa.from("posts").insert({user_id:currentUser.id,text:txt||null,img:pendingPostImg||null});
+    var res=await supa.from("posts").insert({user_id:currentUser.id,text:txt||null,img:pendingPostImg||null});
+    if(res.error){toast("Erreur: "+res.error.message);return;}
     qs("nptxt").value="";
-    qs("post-img-prev").innerHTML="";
+    var prev=qs("post-img-prev");if(prev)prev.innerHTML="";
     pendingPostImg=null;
-    renderFeed();
+    pendingPostFile=null;
+    toast("✅ Publié !");
+    var el=qs("feed");
+    if(el)el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Chargement...</p>";
+    setTimeout(async function(){await renderFeed();},500);
   }catch(e){toast("Erreur: "+e.message);}
 }
 async function renderFeed(){
@@ -1264,11 +1269,16 @@ async function createEvent(){
 async function deleteEvent(eid){
   if(!currentUser)return;
   try{
+    // Clear list immediately
+    var el=qs("events-list");
+    if(el) el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Suppression...</p>";
+    
     await supa.from("event_attendees").delete().eq("event_id",eid);
-    var r=await supa.from("events").delete().eq("id",eid).eq("created_by",currentUser.id);
-    if(r.error){toast("Erreur: "+r.error.message);return;}
+    await supa.from("events").delete().eq("id",eid);
+    
     toast("✅ Supprimé !");
-    await renderEvents();
+    // Force reload after short delay
+    setTimeout(async function(){await renderEvents();}, 500);
   }catch(e){toast("Erreur: "+e.message);}
 }
 async function attendEvent(eid,btn){
