@@ -237,15 +237,6 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
       </button>
     </div>
   </div>
-</div>
-
-<div id="bnav" style="display:none">
-  <button class="nb active" id="nav-home" onclick="goTab('home')"><span class="ni">🏠</span><span>Accueil</span></button>
-  <button class="nb" id="nav-discover" onclick="goTab('discover')"><span class="ni">🔍</span><span>Découvrir</span></button>
-  <button class="nb" id="nav-messages" onclick="goTab('messages')"><span class="ni">💬</span><span>Messages</span></button>
-  <button class="nb" id="nav-groups" onclick="goTab('groups')"><span class="ni">🏫</span><span>Groupes</span></button>
-  <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">👤</span><span>Moi</span></button>
-</div>
 
 <div id="tab-groups" class="tab" style="min-height:unset">
   <!-- Sub tabs + create button on same row -->
@@ -269,6 +260,16 @@ body{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);min-height:100vh
   <div id="events-panel" style="display:none">
     <div id="events-list"></div>
   </div>
+</div>
+
+</div>
+
+<div id="bnav" style="display:none">
+  <button class="nb active" id="nav-home" onclick="goTab('home')"><span class="ni">🏠</span><span>Accueil</span></button>
+  <button class="nb" id="nav-discover" onclick="goTab('discover')"><span class="ni">🔍</span><span>Découvrir</span></button>
+  <button class="nb" id="nav-messages" onclick="goTab('messages')"><span class="ni">💬</span><span>Messages</span></button>
+  <button class="nb" id="nav-groups" onclick="goTab('groups')"><span class="ni">🏫</span><span>Groupes</span></button>
+  <button class="nb" id="nav-settings" onclick="goTab('settings')"><span class="ni">👤</span><span>Moi</span></button>
 </div>
 
 <div id="modal" onclick="if(event.target===this)closeMod()">
@@ -757,7 +758,6 @@ async function renderDiscover(){
         friendMap[other]=f.status;
       });
     }
-    console.log('Utilisateurs chargés:', users.length, users.map(function(u){return u.nom;}));
     var html="";
     users.forEach(function(u){
       var ini=u.avatar||(u.nom||"?").slice(0,2).toUpperCase();
@@ -838,7 +838,6 @@ async function renderMessages(){
   var el=qs("convlist");if(!el||!currentUser)return;
   try{
     var res=await supa.from("messages").select("*").or("sender_id.eq."+currentUser.id+",receiver_id.eq."+currentUser.id).order("created_at",{ascending:false}).limit(50);
-    console.log('Messages res:', res.error, res.data&&res.data.length);
     var msgs=res.data||[];
     if(!msgs.length){el.innerHTML="<p style='text-align:center;color:rgba(255,255,255,.3);padding:30px'>Aucun message.</p>";return;}
     var uids=[...new Set(msgs.map(function(m){return m.sender_id===currentUser.id?m.receiver_id:m.sender_id;}))];
